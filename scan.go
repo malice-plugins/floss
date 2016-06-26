@@ -70,9 +70,9 @@ func getSHA256(name string) string {
 }
 
 // RunCommand runs cmd on file
-func RunCommand(cmd string, path string) string {
+func RunCommand(cmd string, args ...string) string {
 
-	cmdOut, err := exec.Command(cmd, path).Output()
+	cmdOut, err := exec.Command(cmd, args...).Output()
 	if len(cmdOut) == 0 {
 		assert(err)
 	}
