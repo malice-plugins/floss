@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -133,13 +134,16 @@ func removeDuplicates(elements []string) []string {
 }
 
 func getLocationAndNumOfDecodedStrs(line string) (string, int) {
-	line = strings.TrimPrefix(line, "Decoding function at")
-	location := strings.TrimSpace(strings.Split(line, "(decoded")[0])
-	line = strings.Split(line, "(decoded")[1]
-	num, err := strconv.Atoi(strings.TrimSpace(strings.TrimSuffix(line, "strings)")))
-	assert(err)
+	numMatch := regexp.MustCompile("[0-9]+").FindAllString(line, -1)
+	locMatch := regexp.MustCompile("0x[0-9A-F]+").FindAllString(line, -1)
 
-	return location, num
+	if len(locMatch) > 0 && len(numMatch) > 0 {
+		num, err := strconv.Atoi(numMatch[len(numMatch)-1])
+		assert(err)
+
+		return locMatch[0], num
+	}
+	return "", 0
 }
 
 func parseFlossOutput(flossOutput string) resultsData {
@@ -252,10 +256,6 @@ Commands:
 Run '{{.Name}} COMMAND --help' for more information on a command.
 `
 
-func init() {
-	log.SetLevel(log.ErrorLevel)
-}
-
 func main() {
 	cli.AppHelpTemplate = appHelpTemplate
 	app := cli.NewApp()
@@ -306,6 +306,8 @@ func main() {
 
 			if c.Bool("verbose") {
 				log.SetLevel(log.DebugLevel)
+			} else {
+				r.Log.Out = ioutil.Discard
 			}
 
 			floss := scanFile(path)
