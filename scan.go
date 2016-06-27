@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -40,6 +41,12 @@ type Floss struct {
 // ResultsData json object
 type ResultsData struct {
 	Matches []string `json:"matches" gorethink:"matches"`
+}
+
+// DecodedStrings is a decoded strings struct
+type DecodedStrings struct {
+	Location string
+	Strings  []string
 }
 
 func getopt(name, dfault string) string {
@@ -103,6 +110,43 @@ func ParseFlossOutput(flossOutput string) []string {
 		}
 	}
 
+	for i := 0; i < len(keepLines); i++ {
+		if strings.Contains(keepLines[i], "Decoding function at") {
+			// get function location
+			line := strings.TrimPrefix(keepLines[i], "Decoding function at")
+			location := strings.TrimSpace(strings.Split(line, "(decoded")[0])
+			line = strings.Split(line, "(decoded")[1]
+			numOfStrings, err := strconv.Atoi(strings.TrimSpace(strings.TrimSuffix(line, "strings)")))
+			assert(err)
+			fmt.Println(location)
+			fmt.Println(numOfStrings)
+			test := DecodedStrings{
+				Location: location,
+				Strings:  keepLines[i : i+numOfStrings],
+			}
+			fmt.Println(test)
+			i = i + numOfStrings
+			continue
+		} else if strings.Contains(keepLines[i], "stackstrings") {
+			// get stackstrings
+			continue
+		}
+	}
+
+	for _, line := range keepLines {
+		if strings.Contains(line, "Decoding function at") {
+			// get function location
+			line = strings.TrimPrefix(line, "Decoding function at")
+			location := strings.TrimSpace(strings.Split(line, "(")[0])
+			fmt.Println(location)
+			continue
+		} else if strings.Contains(line, "stackstrings") {
+			// get stackstrings
+			continue
+		}
+	}
+	fmt.Println(keepLines)
+	os.Exit(0)
 	return keepLines
 }
 
@@ -110,7 +154,7 @@ func ParseFlossOutput(flossOutput string) []string {
 func scanFile(path string) ResultsData {
 	flossResults := ResultsData{}
 
-	flossResults.Matches = ParseFlossOutput(RunCommand("/usr/bin/floss", "-gq", path))
+	flossResults.Matches = ParseFlossOutput(RunCommand("/usr/bin/floss", "-g", path))
 
 	return flossResults
 }
@@ -230,7 +274,10 @@ func main() {
 			floss := Floss{Results: scanFile(path)}
 
 			// upsert into Database
-			writeToDatabase(pluginResults{ID: getSHA256(path), Data: floss.Results})
+			writeToDatabase(pluginResults{
+				ID:   getopt("MALICE_SCANID", getSHA256(path)),
+				Data: floss.Results,
+			})
 
 			if table {
 				printMarkDownTable(floss)
