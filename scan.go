@@ -30,28 +30,21 @@ const (
 
 type pluginResults struct {
 	ID   string      `json:"id" gorethink:"id,omitempty"`
-	Data ResultsData `json:"floss" gorethink:"floss"`
+	Data resultsData `json:"floss" gorethink:"floss"`
 }
 
-// Floss json object
-type Floss struct {
-	Results ResultsData `json:"floss"`
+type floss struct {
+	Results resultsData `json:"floss"`
 }
 
-// ResultsData json object
-type ResultsData struct {
-	DecodedStrings []DecodedStrings `json:"decoded" gorethink:"decoded"`
+type resultsData struct {
+	DecodedStrings []decodedStrings `json:"decoded" gorethink:"decoded"`
 	StackStrings   []string         `json:"stack" gorethink:"stack"`
 }
 
-// DecodedStrings is a decoded strings struct
-type DecodedStrings struct {
+type decodedStrings struct {
 	Location string   `json:"location" gorethink:"location"`
 	Strings  []string `json:"strings" gorethink:"strings"`
-}
-
-func init() {
-	log.SetLevel(log.InfoLevel)
 }
 
 func getopt(name, dfault string) string {
@@ -96,10 +89,27 @@ func printStatus(resp gorequest.Response, body string, errs []error) {
 	fmt.Println(resp.Status)
 }
 
-// TODO: handle more than just the first Offset, handle multiple MatchStrings
-func printMarkDownTable(floss Floss) {
+func printMarkDownTable(f floss) {
 	fmt.Println("#### Floss")
-
+	fmt.Println("##### Decoded Strings")
+	if f.Results.DecodedStrings != nil {
+		for _, decodedStr := range f.Results.DecodedStrings {
+			fmt.Printf("Location: `%s`\n", decodedStr.Location)
+			for _, dStr := range decodedStr.Strings {
+				fmt.Printf(" - `%s`\n", dStr)
+			}
+		}
+	} else {
+		fmt.Println(" - No Strings")
+	}
+	fmt.Println("##### Stack Strings")
+	if f.Results.StackStrings != nil {
+		for _, stkStr := range f.Results.StackStrings {
+			fmt.Printf(" - `%s`\n", stkStr)
+		}
+	} else {
+		fmt.Println(" - No Strings")
+	}
 }
 
 func removeDuplicates(elements []string) []string {
@@ -131,12 +141,11 @@ func getLocationAndNumOfDecodedStrs(line string) (string, int) {
 	return location, num
 }
 
-// ParseFlossOutput convert FLOSS output into JSON
-func ParseFlossOutput(flossOutput string) ResultsData {
+func parseFlossOutput(flossOutput string) resultsData {
 
 	keepLines := []string{}
-	results := ResultsData{}
-	var decodedStrArray []DecodedStrings
+	results := resultsData{}
+	var decodedStrArray []decodedStrings
 
 	lines := strings.Split(flossOutput, "\n")
 	// remove empty lines
@@ -151,7 +160,7 @@ func ParseFlossOutput(flossOutput string) ResultsData {
 			// get function location
 			location, numOfStrings := getLocationAndNumOfDecodedStrs(keepLines[i])
 
-			decodedStr := DecodedStrings{
+			decodedStr := decodedStrings{
 				Location: location,
 				Strings:  removeDuplicates(keepLines[i+1 : i+numOfStrings+1]),
 			}
@@ -178,9 +187,9 @@ func ParseFlossOutput(flossOutput string) ResultsData {
 }
 
 // scanFile scans file with all floss rules in the rules folder
-func scanFile(path string) Floss {
-	flossResults := Floss{}
-	flossResults.Results = ParseFlossOutput(RunCommand("/usr/bin/floss", "-g", path))
+func scanFile(path string) floss {
+	flossResults := floss{}
+	flossResults.Results = parseFlossOutput(RunCommand("/usr/bin/floss", "-g", path))
 
 	return flossResults
 }
@@ -241,6 +250,10 @@ Commands:
   {{end}}
 Run '{{.Name}} COMMAND --help' for more information on a command.
 `
+
+func init() {
+	log.SetLevel(log.ErrorLevel)
+}
 
 func main() {
 	cli.AppHelpTemplate = appHelpTemplate
