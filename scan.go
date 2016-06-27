@@ -90,19 +90,20 @@ func printStatus(resp gorequest.Response, body string, errs []error) {
 }
 
 func printMarkDownTable(f floss) {
-	fmt.Println("#### Floss")
-	fmt.Println("##### Decoded Strings")
+	fmt.Printf("#### Floss\n\n")
+	fmt.Printf("##### Decoded Strings\n\n")
 	if f.Results.DecodedStrings != nil {
 		for _, decodedStr := range f.Results.DecodedStrings {
 			fmt.Printf("Location: `%s`\n", decodedStr.Location)
 			for _, dStr := range decodedStr.Strings {
 				fmt.Printf(" - `%s`\n", dStr)
 			}
+			fmt.Println()
 		}
 	} else {
 		fmt.Println(" - No Strings")
 	}
-	fmt.Println("##### Stack Strings")
+	fmt.Printf("##### Stack Strings\n\n")
 	if f.Results.StackStrings != nil {
 		for _, stkStr := range f.Results.StackStrings {
 			fmt.Printf(" - `%s`\n", stkStr)
