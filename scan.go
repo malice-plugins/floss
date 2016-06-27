@@ -40,13 +40,18 @@ type Floss struct {
 
 // ResultsData json object
 type ResultsData struct {
-	Matches []string `json:"matches" gorethink:"matches"`
+	DecodedStrings []DecodedStrings `json:"decoded" gorethink:"decoded"`
+	StackStrings   []string         `json:"stack" gorethink:"stack"`
 }
 
 // DecodedStrings is a decoded strings struct
 type DecodedStrings struct {
-	Location string
-	Strings  []string
+	Location string   `json:"location" gorethink:"location"`
+	Strings  []string `json:"strings" gorethink:"strings"`
+}
+
+func init() {
+	log.SetLevel(log.InfoLevel)
 }
 
 func getopt(name, dfault string) string {
@@ -97,64 +102,85 @@ func printMarkDownTable(floss Floss) {
 
 }
 
+func removeDuplicates(elements []string) []string {
+	// Use map to record duplicates as we find them.
+	encountered := map[string]bool{}
+	result := []string{}
+
+	for v := range elements {
+		if encountered[elements[v]] == true {
+			// Do not add duplicate.
+		} else {
+			// Record this element as an encountered element.
+			encountered[elements[v]] = true
+			// Append to result slice.
+			result = append(result, elements[v])
+		}
+	}
+	// Return the new slice.
+	return result
+}
+
+func getLocationAndNumOfDecodedStrs(line string) (string, int) {
+	line = strings.TrimPrefix(line, "Decoding function at")
+	location := strings.TrimSpace(strings.Split(line, "(decoded")[0])
+	line = strings.Split(line, "(decoded")[1]
+	num, err := strconv.Atoi(strings.TrimSpace(strings.TrimSuffix(line, "strings)")))
+	assert(err)
+
+	return location, num
+}
+
 // ParseFlossOutput convert FLOSS output into JSON
-func ParseFlossOutput(flossOutput string) []string {
+func ParseFlossOutput(flossOutput string) ResultsData {
 
 	keepLines := []string{}
+	results := ResultsData{}
+	var decodedStrArray []DecodedStrings
 
 	lines := strings.Split(flossOutput, "\n")
-
+	// remove empty lines
 	for _, line := range lines {
 		if len(strings.TrimSpace(line)) != 0 {
 			keepLines = append(keepLines, strings.TrimSpace(line))
 		}
 	}
-
+	// build results data
 	for i := 0; i < len(keepLines); i++ {
 		if strings.Contains(keepLines[i], "Decoding function at") {
 			// get function location
-			line := strings.TrimPrefix(keepLines[i], "Decoding function at")
-			location := strings.TrimSpace(strings.Split(line, "(decoded")[0])
-			line = strings.Split(line, "(decoded")[1]
-			numOfStrings, err := strconv.Atoi(strings.TrimSpace(strings.TrimSuffix(line, "strings)")))
-			assert(err)
-			fmt.Println(location)
-			fmt.Println(numOfStrings)
-			test := DecodedStrings{
+			location, numOfStrings := getLocationAndNumOfDecodedStrs(keepLines[i])
+
+			decodedStr := DecodedStrings{
 				Location: location,
-				Strings:  keepLines[i : i+numOfStrings],
+				Strings:  removeDuplicates(keepLines[i+1 : i+numOfStrings+1]),
 			}
-			fmt.Println(test)
+			decodedStrArray = append(decodedStrArray, decodedStr)
 			i = i + numOfStrings
 			continue
 		} else if strings.Contains(keepLines[i], "stackstrings") {
 			// get stackstrings
+			line := strings.TrimPrefix(keepLines[i], "FLOSS extracted")
+			numOfStrings, err := strconv.Atoi(strings.TrimSpace(strings.TrimSuffix(line, "stackstrings")))
+			assert(err)
+			// if len(keepLines) < i+numOfStrings+1 {
+			results.StackStrings = keepLines[i+1 : i+numOfStrings+1]
+			// } else {
+			// 	log.Fatal("shiz went sideways.")
+			// }
+			i = i + numOfStrings
 			continue
 		}
 	}
+	results.DecodedStrings = decodedStrArray
 
-	for _, line := range keepLines {
-		if strings.Contains(line, "Decoding function at") {
-			// get function location
-			line = strings.TrimPrefix(line, "Decoding function at")
-			location := strings.TrimSpace(strings.Split(line, "(")[0])
-			fmt.Println(location)
-			continue
-		} else if strings.Contains(line, "stackstrings") {
-			// get stackstrings
-			continue
-		}
-	}
-	fmt.Println(keepLines)
-	os.Exit(0)
-	return keepLines
+	return results
 }
 
 // scanFile scans file with all floss rules in the rules folder
-func scanFile(path string) ResultsData {
-	flossResults := ResultsData{}
-
-	flossResults.Matches = ParseFlossOutput(RunCommand("/usr/bin/floss", "-g", path))
+func scanFile(path string) Floss {
+	flossResults := Floss{}
+	flossResults.Results = ParseFlossOutput(RunCommand("/usr/bin/floss", "-g", path))
 
 	return flossResults
 }
@@ -162,41 +188,38 @@ func scanFile(path string) ResultsData {
 // writeToDatabase upserts plugin results into Database
 func writeToDatabase(results pluginResults) {
 
-	address := fmt.Sprintf("%s:28015", getopt("MALICE_RETHINKDB", "rethink"))
-
 	// connect to RethinkDB
 	session, err := r.Connect(r.ConnectOpts{
-		Address:  address,
+		Address:  fmt.Sprintf("%s:28015", getopt("MALICE_RETHINKDB", "rethink")),
 		Timeout:  5 * time.Second,
 		Database: "malice",
 	})
+	if err != nil {
+		log.Debug(err)
+		return
+	}
 	defer session.Close()
 
-	if err == nil {
-		res, err := r.Table("samples").Get(results.ID).Run(session)
+	res, err := r.Table("samples").Get(results.ID).Run(session)
+	assert(err)
+	defer res.Close()
+
+	if res.IsNil() {
+		// upsert into RethinkDB
+		resp, err := r.Table("samples").Insert(results, r.InsertOpts{Conflict: "replace"}).RunWrite(session)
 		assert(err)
-		defer res.Close()
-
-		if res.IsNil() {
-			// upsert into RethinkDB
-			resp, err := r.Table("samples").Insert(results, r.InsertOpts{Conflict: "replace"}).RunWrite(session)
-			assert(err)
-			log.Debug(resp)
-		} else {
-			resp, err := r.Table("samples").Get(results.ID).Update(map[string]interface{}{
-				"plugins": map[string]interface{}{
-					category: map[string]interface{}{
-						name: results.Data,
-					},
-				},
-			}).RunWrite(session)
-			assert(err)
-
-			log.Debug(resp)
-		}
-
+		log.Debug(resp)
 	} else {
-		log.Debug(err)
+		resp, err := r.Table("samples").Get(results.ID).Update(map[string]interface{}{
+			"plugins": map[string]interface{}{
+				category: map[string]interface{}{
+					name: results.Data,
+				},
+			},
+		}).RunWrite(session)
+		assert(err)
+
+		log.Debug(resp)
 	}
 }
 
@@ -271,7 +294,7 @@ func main() {
 				log.SetLevel(log.DebugLevel)
 			}
 
-			floss := Floss{Results: scanFile(path)}
+			floss := scanFile(path)
 
 			// upsert into Database
 			writeToDatabase(pluginResults{
