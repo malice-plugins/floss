@@ -7,7 +7,7 @@ malice-floss
 
 Malice FLOSS Plugin
 
-This repository contains a **Dockerfile** of **malice/floss** for [Docker](https://www.docker.io/)'s [trusted build](https://hub.docker.com/r/malice/floss/) published to the public [DockerHub](https://hub.docker.com/).
+This repository contains a **Dockerfile** of the [FLOSS](https://github.com/fireeye/flare-floss) malice plugin **malice/floss**.
 
 ### Dependencies
 
@@ -215,7 +215,7 @@ Location: `0x404DDE`
  - `LM1.2X002`
  - `LANMAN2.1`
  - `NT LM 0.12`
- 
+
 ##### Stack Strings
  - `\A|{@`
  - `CAAA\`
@@ -254,7 +254,7 @@ Find a bug? Want more features? Find something missing in the documentation? Let
 
 ### TODO
 
--	[ ] Cover all possible string type outputs
+-	[ ] Cover all possible string type outputs (ASCII/UTF-16) ?
 
 ### License
 
