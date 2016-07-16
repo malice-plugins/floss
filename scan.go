@@ -39,6 +39,8 @@ type floss struct {
 }
 
 type resultsData struct {
+	ASCIIStrings   []string         `json:"ascii" gorethink:"ascii"`
+	UTF16Strings   []string         `json:"utf-16" gorethink:"utf-16"`
 	DecodedStrings []decodedStrings `json:"decoded" gorethink:"decoded"`
 	StackStrings   []string         `json:"stack" gorethink:"stack"`
 }
@@ -92,6 +94,20 @@ func printStatus(resp gorequest.Response, body string, errs []error) {
 
 func printMarkDownTable(f floss) {
 	fmt.Printf("#### Floss\n\n")
+	if f.Results.ASCIIStrings != nil {
+		fmt.Printf("##### ASCII Strings\n\n")
+		for _, ascStr := range f.Results.ASCIIStrings {
+			fmt.Printf(" - `%s`\n", ascStr)
+		}
+		fmt.Println()
+	}
+	if f.Results.UTF16Strings != nil {
+		fmt.Printf("##### UTF-16 Strings\n\n")
+		for _, utfStr := range f.Results.UTF16Strings {
+			fmt.Printf(" - `%s`\n", utfStr)
+		}
+		fmt.Println()
+	}
 	fmt.Printf("##### Decoded Strings\n\n")
 	if f.Results.DecodedStrings != nil {
 		for _, decodedStr := range f.Results.DecodedStrings {
@@ -146,7 +162,29 @@ func getLocationAndNumOfDecodedStrs(line string) (string, int) {
 	return "", 0
 }
 
-func parseFlossOutput(flossOutput string) resultsData {
+func getASCIIStrings(strArray []string) []string {
+	asciiStrings := []string{}
+	for _, str := range strArray {
+		if strings.Contains(str, "FLOSS static UTF-16 strings") {
+			break
+		}
+		asciiStrings = append(asciiStrings, str)
+	}
+	return asciiStrings
+}
+
+func getUTF16Strings(strArray []string) []string {
+	utf16Strings := []string{}
+	for _, str := range strArray {
+		if strings.Contains(str, "FLOSS decoded") {
+			break
+		}
+		utf16Strings = append(utf16Strings, str)
+	}
+	return utf16Strings
+}
+
+func parseFlossOutput(flossOutput string, all bool) resultsData {
 
 	keepLines := []string{}
 	results := resultsData{}
@@ -161,6 +199,14 @@ func parseFlossOutput(flossOutput string) resultsData {
 	}
 	// build results data
 	for i := 0; i < len(keepLines); i++ {
+		if all {
+			if strings.Contains(keepLines[i], "FLOSS static ASCII strings") {
+				results.ASCIIStrings = removeDuplicates(getASCIIStrings(keepLines[i+1 : len(keepLines)]))
+			}
+			if strings.Contains(keepLines[i], "FLOSS static UTF-16 strings") {
+				results.UTF16Strings = removeDuplicates(getUTF16Strings(keepLines[i+1 : len(keepLines)]))
+			}
+		}
 		if strings.Contains(keepLines[i], "Decoding function at") {
 			// get function location
 			location, numOfStrings := getLocationAndNumOfDecodedStrs(keepLines[i])
@@ -192,9 +238,10 @@ func parseFlossOutput(flossOutput string) resultsData {
 }
 
 // scanFile scans file with all floss rules in the rules folder
-func scanFile(path string) floss {
+func scanFile(path string, all bool) floss {
 	flossResults := floss{}
-	flossResults.Results = parseFlossOutput(RunCommand("/usr/bin/floss", "-g", path))
+	flossResults.Results = parseFlossOutput(RunCommand("./floss", "-g", path), all)
+	// flossResults.Results = parseFlossOutput(RunCommand("/usr/bin/floss", "-g", path))
 
 	return flossResults
 }
@@ -266,6 +313,7 @@ func main() {
 	app.Compiled, _ = time.Parse("20060102", BuildTime)
 	app.Usage = "Malice FLOSS Plugin"
 	var table bool
+	var all bool
 	var rethinkdb string
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
@@ -294,6 +342,11 @@ func main() {
 			Usage:       "output as Markdown table",
 			Destination: &table,
 		},
+		cli.BoolFlag{
+			Name:        "all, a",
+			Usage:       "output ascii/utf-16 strings",
+			Destination: &all,
+		},
 	}
 	app.ArgsUsage = "FILE to scan with FLOSS"
 	app.Action = func(c *cli.Context) error {
@@ -310,7 +363,7 @@ func main() {
 				r.Log.Out = ioutil.Discard
 			}
 
-			floss := scanFile(path)
+			floss := scanFile(path, all)
 
 			// upsert into Database
 			writeToDatabase(pluginResults{
