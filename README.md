@@ -35,16 +35,17 @@ Author:
   blacktop - <https://github.com/blacktop>
 
 Options:
-  --verbose, -V      verbose output
-  --rethinkdb value  rethinkdb address for Malice to store results [$MALICE_RETHINKDB]
-  --post, -p         POST results to Malice webhook [$MALICE_ENDPOINT]
-  --proxy, -x        proxy settings for Malice webhook endpoint [$MALICE_PROXY]
-  --table, -t        output as Markdown table
-  --help, -h         show help
-  --version, -v      print the version
+  --verbose, -V		verbose output
+  --rethinkdb value	rethinkdb address for Malice to store results [$MALICE_RETHINKDB]
+  --post, -p		POST results to Malice webhook [$MALICE_ENDPOINT]
+  --proxy, -x		proxy settings for Malice webhook endpoint [$MALICE_PROXY]
+  --table, -t		output as Markdown table
+  --all, -a		output ascii/utf-16 strings
+  --help, -h		show help
+  --version, -v		print the version
 
 Commands:
-  help  Shows a list of commands or help for one command
+  help	Shows a list of commands or help for one command
 
 Run 'floss COMMAND --help' for more information on a command.
 ```
@@ -153,73 +154,28 @@ This will output to stdout and POST to malice results API webhook endpoint.
 
 ##### Decoded Strings
 
-Location: `0x401047`
- - `Ie_nkokbpAtep`
- - `+^]g*dpi`
- - `Ie_nkokbpD]ra=_g`
+Location: `0x401047` - `Ie_nkokbpAtep` - `+^]g*dpi` - `Ie_nkokbpD]ra=_g`
 
-Location: `0x401059`
- - `*lecnaC*`
- - `Software\Microsoft\CurrentNetInf`
- - `SYSTEM\CurrentControlSet\Control\Lsa`
- - `Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run`
- - `MicrosoftZj`
- - `LhbqnrnesDwhs`
- - `MicrosoftHaveExit`
- - `LhbqnrnesG`ud@bj`
- - `IEXPLORE.EXE`
- - `/ver.htm`
- - `/exe.htm`
- - `/app.htm`
- - `/myapp.htm`
- - `/hostlist.htm`
- - `.a`j-gsl`
- - `/SomeUpList.htm`
- - `/SomeUpVer.htm`
- - `www.flyeagles.com`
- - `www.km-nyc.com`
- - `/restore`
- - `/dizhi.gif`
- - `/connect.gif`
- - `\$NtUninstallKB900727$`
- - `\netsvc.exe`
- - `\netscv.exe`
- - `\netsvcs.exe`
- - `System Idle Process`
- - `Program Files`
- - `\Internet Exp1orer`
- - `forceguest`
- - `AudioPort`
- - `AudioPort.sys`
- - `SYSTEM\CurrentControlSet\Services`
- - `SYSTEM\ControlSet001\Services`
- - `SYSTEM\ControlSet002\Services`
- - `\drivers\`
- - `\DriverNum.dat`
+Location: `0x401059` - `*lecnaC*` - `Software\Microsoft\CurrentNetInf` - `SYSTEM\CurrentControlSet\Control\Lsa` - `Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run` - `MicrosoftZj` - `LhbqnrnesDwhs` - `MicrosoftHaveExit` - `LhbqnrnesG`ud@bj`
+ -`IEXPLORE.EXE`
+ -`/ver.htm`
+ -`/exe.htm`
+ -`/app.htm`
+ -`/myapp.htm`
+ -`/hostlist.htm`
+ -`.a`j-gsl` - `/SomeUpList.htm` - `/SomeUpVer.htm` - `www.flyeagles.com` - `www.km-nyc.com` - `/restore` - `/dizhi.gif` - `/connect.gif` - `\$NtUninstallKB900727$` - `\netsvc.exe` - `\netscv.exe` - `\netsvcs.exe` - `System Idle Process` - `Program Files` - `\Internet Exp1orer` - `forceguest` - `AudioPort` - `AudioPort.sys` - `SYSTEM\CurrentControlSet\Services` - `SYSTEM\ControlSet001\Services` - `SYSTEM\ControlSet002\Services` - `\drivers\` - `\DriverNum.dat`
 
-Location: `0x40511A`
- - `\A|{@`
+Location: `0x40511A` - `\A|{@`
 
-Location: `0x403DDA`
- - `,pVA.`
+Location: `0x403DDA` - `,pVA.`
 
-Location: `0x404DDE`
- - `SMBs`
- - `NTLMSSP`
- - `Windows 2000 2195`
- - `Windows 2000 5.0`
- - `SMBr`
- - `PC NETWORK PROGRAM 1.0`
- - `LANMAN1.0`
- - `Windows for Workgroups 3.1a`
- - `LM1.2X002`
- - `LANMAN2.1`
- - `NT LM 0.12`
+Location: `0x404DDE` - `SMBs` - `NTLMSSP` - `Windows 2000 2195` - `Windows 2000 5.0` - `SMBr` - `PC NETWORK PROGRAM 1.0` - `LANMAN1.0` - `Windows for Workgroups 3.1a` - `LM1.2X002` - `LANMAN2.1` - `NT LM 0.12`
 
 ##### Stack Strings
- - `\A|{@`
- - `CAAA\`
- - `cmd.exe`
+
+-	`\A|{@`
+-	`CAAA\`
+-	`cmd.exe`
 
 ---
 
