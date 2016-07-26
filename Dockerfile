@@ -1,4 +1,4 @@
-FROM gliderlabs/alpine
+FROM malice/alpine
 
 MAINTAINER blacktop, https://github.com/blacktop
 
@@ -6,11 +6,12 @@ COPY . /go/src/github.com/maliceio/malice-floss
 RUN apk-install python py-setuptools
 RUN apk-install -t build-deps go git mercurial build-base py-pip python-dev \
   && set -x \
-  && echo "Install FLOSS..." \  
+  && echo "Install FLOSS..." \
   && pip install https://github.com/williballenthin/vivisect/zipball/master \
   && pip install https://github.com/fireeye/flare-floss/zipball/master \
   && echo "Building scan Go binary..." \
   && cd /go/src/github.com/maliceio/malice-floss \
+  && mv docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh \
   && export GOPATH=/go \
   && go version \
   && go get \
@@ -20,6 +21,7 @@ RUN apk-install -t build-deps go git mercurial build-base py-pip python-dev \
 
 WORKDIR /malware
 
+# ENTRYPOINT ["docker-entrypoint.sh"]
 ENTRYPOINT ["/bin/scan"]
 
 CMD ["--help"]
