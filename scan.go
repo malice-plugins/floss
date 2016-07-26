@@ -240,8 +240,8 @@ func parseFlossOutput(flossOutput string, all bool) resultsData {
 // scanFile scans file with all floss rules in the rules folder
 func scanFile(path string, all bool) floss {
 	flossResults := floss{}
-	flossResults.Results = parseFlossOutput(RunCommand("./floss", "-g", path), all)
-	// flossResults.Results = parseFlossOutput(RunCommand("/usr/bin/floss", "-g", path))
+	// flossResults.Results = parseFlossOutput(RunCommand("./floss", "-g", path), all)
+	flossResults.Results = parseFlossOutput(RunCommand("/usr/bin/floss", "-g", path), all)
 
 	return flossResults
 }
