@@ -233,7 +233,7 @@ Location: `0x404DDE`
 ```bash
 $ docker volume create --name malice
 $ docker run -d -p 28015:28015 -p 8080:8080 -v malice:/data --name rethink rethinkdb
-$ docker run --rm -v /path/to/malware:/malware:ro --link rethink:rethink malice/floss -t FILE
+$ docker run --rm -v /path/to/malware:/malware:ro --link rethink malice/floss -t FILE
 ```
 
 ### To Run on OSX
