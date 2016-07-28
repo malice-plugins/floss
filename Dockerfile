@@ -11,7 +11,6 @@ RUN apk-install -t build-deps go git mercurial build-base py-pip python-dev \
   && pip install https://github.com/fireeye/flare-floss/zipball/master \
   && echo "Building scan Go binary..." \
   && cd /go/src/github.com/maliceio/malice-floss \
-  && mv docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh \
   && export GOPATH=/go \
   && go version \
   && go get \
