@@ -244,10 +244,6 @@ Find a bug? Want more features? Find something missing in the documentation? Let
 
 ### Credits
 
-### TODO
-
--	[ ] Cover all possible string type outputs (ASCII/UTF-16) ?
-
 ### License
 
 MIT Copyright (c) 2016 **blacktop**
