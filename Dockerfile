@@ -20,6 +20,6 @@ RUN apk-install -t build-deps go git mercurial build-base py-pip python-dev \
 
 WORKDIR /malware
 
-ENTRYPOINT ["gosu","malice","tini","--","scan"]
+ENTRYPOINT ["gosu","malice","/sbin/tini","--","scan"]
 
 CMD ["--help"]
