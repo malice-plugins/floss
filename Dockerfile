@@ -1,4 +1,4 @@
-FROM malice/alpine
+FROM malice/alpine:tini
 
 MAINTAINER blacktop, https://github.com/blacktop
 
@@ -21,7 +21,6 @@ RUN apk-install -t build-deps go git mercurial build-base py-pip python-dev \
 
 WORKDIR /malware
 
-# ENTRYPOINT ["docker-entrypoint.sh"]
-ENTRYPOINT ["/bin/scan"]
+ENTRYPOINT ["gosu","malice","tini","--","scan"]
 
 CMD ["--help"]
