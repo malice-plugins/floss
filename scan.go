@@ -1,21 +1,19 @@
 package main
 
 import (
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
-	"os/exec"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/parnurzeal/gorequest"
+	"github.com/fatih/structs"
+	"github.com/maliceio/malice/malice/database/elasticsearch"
+	"github.com/maliceio/malice/utils"
 	"github.com/urfave/cli"
-	r "gopkg.in/dancannon/gorethink.v2"
 )
 
 // Version stores the plugin's version
@@ -48,48 +46,6 @@ type resultsData struct {
 type decodedStrings struct {
 	Location string   `json:"location" gorethink:"location"`
 	Strings  []string `json:"strings" gorethink:"strings"`
-}
-
-func getopt(name, dfault string) string {
-	value := os.Getenv(name)
-	if value == "" {
-		value = dfault
-	}
-	return value
-}
-
-func assert(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
-// getSHA256 calculates a file's sha256sum
-func getSHA256(name string) string {
-
-	dat, err := ioutil.ReadFile(name)
-	assert(err)
-
-	h256 := sha256.New()
-	_, err = h256.Write(dat)
-	assert(err)
-
-	return fmt.Sprintf("%x", h256.Sum(nil))
-}
-
-// RunCommand runs cmd on file
-func RunCommand(cmd string, args ...string) string {
-
-	cmdOut, err := exec.Command(cmd, args...).Output()
-	if len(cmdOut) == 0 {
-		assert(err)
-	}
-
-	return string(cmdOut)
-}
-
-func printStatus(resp gorequest.Response, body string, errs []error) {
-	fmt.Println(resp.Status)
 }
 
 func printMarkDownTable(f floss) {
@@ -155,7 +111,7 @@ func getLocationAndNumOfDecodedStrs(line string) (string, int) {
 
 	if len(locMatch) > 0 && len(numMatch) > 0 {
 		num, err := strconv.Atoi(numMatch[len(numMatch)-1])
-		assert(err)
+		utils.Assert(err)
 
 		return locMatch[0], num
 	}
@@ -222,7 +178,7 @@ func parseFlossOutput(flossOutput string, all bool) resultsData {
 			// get stackstrings
 			line := strings.TrimPrefix(keepLines[i], "FLOSS extracted")
 			numOfStrings, err := strconv.Atoi(strings.TrimSpace(strings.TrimSuffix(line, "stackstrings")))
-			assert(err)
+			utils.Assert(err)
 			// if len(keepLines) < i+numOfStrings+1 {
 			results.StackStrings = keepLines[i+1 : i+numOfStrings+1]
 			// } else {
@@ -241,47 +197,9 @@ func parseFlossOutput(flossOutput string, all bool) resultsData {
 func scanFile(path string, all bool) floss {
 	flossResults := floss{}
 	// flossResults.Results = parseFlossOutput(RunCommand("./floss", "-g", path), all)
-	flossResults.Results = parseFlossOutput(RunCommand("/usr/bin/floss", "-g", path), all)
+	flossResults.Results = parseFlossOutput(utils.RunCommand("/usr/bin/floss", "-g", path), all)
 
 	return flossResults
-}
-
-// writeToDatabase upserts plugin results into Database
-func writeToDatabase(results pluginResults) {
-
-	// connect to RethinkDB
-	session, err := r.Connect(r.ConnectOpts{
-		Address:  fmt.Sprintf("%s:28015", getopt("MALICE_RETHINKDB", "rethink")),
-		Timeout:  5 * time.Second,
-		Database: "malice",
-	})
-	if err != nil {
-		log.Debug(err)
-		return
-	}
-	defer session.Close()
-
-	res, err := r.Table("samples").Get(results.ID).Run(session)
-	assert(err)
-	defer res.Close()
-
-	if res.IsNil() {
-		// upsert into RethinkDB
-		resp, err := r.Table("samples").Insert(results, r.InsertOpts{Conflict: "replace"}).RunWrite(session)
-		assert(err)
-		log.Debug(resp)
-	} else {
-		resp, err := r.Table("samples").Get(results.ID).Update(map[string]interface{}{
-			"plugins": map[string]interface{}{
-				category: map[string]interface{}{
-					name: results.Data,
-				},
-			},
-		}).RunWrite(session)
-		assert(err)
-
-		log.Debug(resp)
-	}
 }
 
 var appHelpTemplate = `Usage: {{.Name}} {{if .Flags}}[OPTIONS] {{end}}COMMAND [arg...]
@@ -314,18 +232,18 @@ func main() {
 	app.Usage = "Malice FLOSS Plugin"
 	var table bool
 	var all bool
-	var rethinkdb string
+	var elasitcsearch string
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose, V",
 			Usage: "verbose output",
 		},
 		cli.StringFlag{
-			Name:        "rethinkdb",
+			Name:        "elasitcsearch",
 			Value:       "",
-			Usage:       "rethinkdb address for Malice to store results",
-			EnvVar:      "MALICE_RETHINKDB",
-			Destination: &rethinkdb,
+			Usage:       "elasitcsearch address for Malice to store results",
+			EnvVar:      "MALICE_ELASTICSEARCH",
+			Destination: &elasitcsearch,
 		},
 		cli.BoolFlag{
 			Name:   "post, p",
@@ -354,28 +272,29 @@ func main() {
 			path := c.Args().First()
 			// Check that file exists
 			if _, err := os.Stat(path); os.IsNotExist(err) {
-				assert(err)
+				utils.Assert(err)
 			}
 
 			if c.Bool("verbose") {
 				log.SetLevel(log.DebugLevel)
-			} else {
-				r.Log.Out = ioutil.Discard
 			}
 
 			floss := scanFile(path, all)
 
 			// upsert into Database
-			writeToDatabase(pluginResults{
-				ID:   getopt("MALICE_SCANID", getSHA256(path)),
-				Data: floss.Results,
+			elasticsearch.InitElasticSearch()
+			elasticsearch.WritePluginResultsToDatabase(elasticsearch.PluginResults{
+				ID:       utils.Getopt("MALICE_SCANID", utils.GetSHA256(path)),
+				Name:     name,
+				Category: category,
+				Data:     structs.Map(floss.Results),
 			})
 
 			if table {
 				printMarkDownTable(floss)
 			} else {
 				flossJSON, err := json.Marshal(floss)
-				assert(err)
+				utils.Assert(err)
 				fmt.Println(string(flossJSON))
 			}
 		} else {
@@ -385,5 +304,5 @@ func main() {
 	}
 
 	err := app.Run(os.Args)
-	assert(err)
+	utils.Assert(err)
 }
