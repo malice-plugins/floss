@@ -28,8 +28,8 @@ const (
 )
 
 type pluginResults struct {
-	ID   string      `json:"id" gorethink:"id,omitempty"`
-	Data resultsData `json:"floss" gorethink:"floss"`
+	ID   string      `json:"id" structs:"id,omitempty"`
+	Data resultsData `json:"floss" structs:"floss"`
 }
 
 type floss struct {
@@ -37,15 +37,15 @@ type floss struct {
 }
 
 type resultsData struct {
-	ASCIIStrings   []string         `json:"ascii" gorethink:"ascii"`
-	UTF16Strings   []string         `json:"utf-16" gorethink:"utf-16"`
-	DecodedStrings []decodedStrings `json:"decoded" gorethink:"decoded"`
-	StackStrings   []string         `json:"stack" gorethink:"stack"`
+	ASCIIStrings   []string         `json:"ascii" structs:"ascii"`
+	UTF16Strings   []string         `json:"utf-16" structs:"utf-16"`
+	DecodedStrings []decodedStrings `json:"decoded" structs:"decoded"`
+	StackStrings   []string         `json:"stack" structs:"stack"`
 }
 
 type decodedStrings struct {
-	Location string   `json:"location" gorethink:"location"`
-	Strings  []string `json:"strings" gorethink:"strings"`
+	Location string   `json:"location" structs:"location"`
+	Strings  []string `json:"strings" structs:"strings"`
 }
 
 func printMarkDownTable(f floss) {
