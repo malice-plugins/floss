@@ -234,8 +234,12 @@ Run '{{.Name}} COMMAND --help' for more information on a command.
 `
 
 func main() {
+
+	var elastic string
+
 	cli.AppHelpTemplate = appHelpTemplate
 	app := cli.NewApp()
+
 	app.Name = "floss"
 	app.Author = "blacktop"
 	app.Email = "https://github.com/blacktop"
@@ -254,10 +258,11 @@ func main() {
 			EnvVar: "MALICE_TIMEOUT",
 		},
 		cli.StringFlag{
-			Name:   "elasitcsearch",
-			Value:  "",
-			Usage:  "elasitcsearch address for Malice to store results",
-			EnvVar: "MALICE_ELASTICSEARCH",
+			Name:        "elasitcsearch",
+			Value:       "",
+			Usage:       "elasitcsearch address for Malice to store results",
+			EnvVar:      "MALICE_ELASTICSEARCH",
+			Destination: &elastic,
 		},
 		cli.BoolFlag{
 			Name:   "post, p",
@@ -298,7 +303,7 @@ func main() {
 			floss := scanFile(ctx, path, c.Bool("all"))
 
 			// upsert into Database
-			elasticsearch.InitElasticSearch(c.String("elasitcsearch"))
+			elasticsearch.InitElasticSearch(elastic)
 			elasticsearch.WritePluginResultsToDatabase(elasticsearch.PluginResults{
 				ID:       utils.Getopt("MALICE_SCANID", utils.GetSHA256(path)),
 				Name:     name,
