@@ -9,10 +9,13 @@ import (
 	"strings"
 	"time"
 
+	"context"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/fatih/structs"
 	"github.com/maliceio/go-plugin-utils/database/elasticsearch"
 	"github.com/maliceio/go-plugin-utils/utils"
+	"github.com/parnurzeal/gorequest"
 	"github.com/urfave/cli"
 )
 
@@ -140,7 +143,11 @@ func getUTF16Strings(strArray []string) []string {
 	return utf16Strings
 }
 
-func parseFlossOutput(flossOutput string, all bool) resultsData {
+func parseFlossOutput(flossOutput string, err error, all bool) resultsData {
+
+	if err != nil {
+		return resultsData{ASCIIStrings: []string{err.Error()}}
+	}
 
 	keepLines := []string{}
 	results := resultsData{}
@@ -194,12 +201,17 @@ func parseFlossOutput(flossOutput string, all bool) resultsData {
 }
 
 // scanFile scans file with all floss rules in the rules folder
-func scanFile(path string, all bool) floss {
+func scanFile(ctx context.Context, path string, all bool) floss {
 	flossResults := floss{}
 	// flossResults.Results = parseFlossOutput(RunCommand("./floss", "-g", path), all)
-	flossResults.Results = parseFlossOutput(utils.RunCommand("/usr/bin/floss", "-g", path), all)
+	output, err := utils.RunCommand(ctx, "/usr/bin/floss", "-g", path)
+	flossResults.Results = parseFlossOutput(output, err, all)
 
 	return flossResults
+}
+
+func printStatus(resp gorequest.Response, body string, errs []error) {
+	fmt.Println(body)
 }
 
 var appHelpTemplate = `Usage: {{.Name}} {{if .Flags}}[OPTIONS] {{end}}COMMAND [arg...]
@@ -230,20 +242,22 @@ func main() {
 	app.Version = Version + ", BuildTime: " + BuildTime
 	app.Compiled, _ = time.Parse("20060102", BuildTime)
 	app.Usage = "Malice FLOSS Plugin"
-	var table bool
-	var all bool
-	var elasitcsearch string
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose, V",
 			Usage: "verbose output",
 		},
+		cli.IntFlag{
+			Name:   "timeout",
+			Value:  30,
+			Usage:  "malice plugin timeout (in seconds)",
+			EnvVar: "MALICE_TIMEOUT",
+		},
 		cli.StringFlag{
-			Name:        "elasitcsearch",
-			Value:       "",
-			Usage:       "elasitcsearch address for Malice to store results",
-			EnvVar:      "MALICE_ELASTICSEARCH",
-			Destination: &elasitcsearch,
+			Name:   "elasitcsearch",
+			Value:  "",
+			Usage:  "elasitcsearch address for Malice to store results",
+			EnvVar: "MALICE_ELASTICSEARCH",
 		},
 		cli.BoolFlag{
 			Name:   "post, p",
@@ -256,19 +270,21 @@ func main() {
 			EnvVar: "MALICE_PROXY",
 		},
 		cli.BoolFlag{
-			Name:        "table, t",
-			Usage:       "output as Markdown table",
-			Destination: &table,
+			Name:  "table, t",
+			Usage: "output as Markdown table",
 		},
 		cli.BoolFlag{
-			Name:        "all, a",
-			Usage:       "output ascii/utf-16 strings",
-			Destination: &all,
+			Name:  "all, a",
+			Usage: "output ascii/utf-16 strings",
 		},
 	}
 	app.ArgsUsage = "FILE to scan with FLOSS"
 	app.Action = func(c *cli.Context) error {
 		if c.Args().Present() {
+
+			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.Int("timeout"))*time.Second)
+			defer cancel()
+
 			path := c.Args().First()
 			// Check that file exists
 			if _, err := os.Stat(path); os.IsNotExist(err) {
@@ -279,10 +295,10 @@ func main() {
 				log.SetLevel(log.DebugLevel)
 			}
 
-			floss := scanFile(path, all)
+			floss := scanFile(ctx, path, c.Bool("all"))
 
 			// upsert into Database
-			elasticsearch.InitElasticSearch()
+			elasticsearch.InitElasticSearch(c.String("elasitcsearch"))
 			elasticsearch.WritePluginResultsToDatabase(elasticsearch.PluginResults{
 				ID:       utils.Getopt("MALICE_SCANID", utils.GetSHA256(path)),
 				Name:     name,
@@ -290,11 +306,23 @@ func main() {
 				Data:     structs.Map(floss.Results),
 			})
 
-			if table {
+			if c.Bool("table") {
 				printMarkDownTable(floss)
 			} else {
 				flossJSON, err := json.Marshal(floss)
 				utils.Assert(err)
+				if c.Bool("post") {
+					request := gorequest.New()
+					if c.Bool("proxy") {
+						request = gorequest.New().Proxy(os.Getenv("MALICE_PROXY"))
+					}
+					request.Post(os.Getenv("MALICE_ENDPOINT")).
+						Set("X-Malice-ID", utils.Getopt("MALICE_SCANID", utils.GetSHA256(path))).
+						Send(string(flossJSON)).
+						End(printStatus)
+
+					return nil
+				}
 				fmt.Println(string(flossJSON))
 			}
 		} else {
