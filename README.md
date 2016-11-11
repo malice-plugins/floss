@@ -42,8 +42,8 @@ Options:
   --proxy, -x		    proxy settings for Malice webhook endpoint [$MALICE_PROXY]
   --table, -t		    output as Markdown table
   --all, -a		        output ascii/utf-16 strings
-  --help, -h		   show help
-  --version, -v		  print the version
+  --help, -h		    show help
+  --version, -v		    print the version
 
 Commands:
   help	Shows a list of commands or help for one command
