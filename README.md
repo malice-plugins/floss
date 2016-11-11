@@ -35,15 +35,15 @@ Author:
   blacktop - <https://github.com/blacktop>
 
 Options:
-  --verbose, -V		 verbose output
+  --verbose, -V		    verbose output
   --timeout value       malice plugin timeout (in seconds) (default: 60) [$MALICE_TIMEOUT]
   --elasitcsearch value elasitcsearch address for Malice to store results [$MALICE_ELASTICSEARCH]
   --post, -p	POST    results to Malice webhook [$MALICE_ENDPOINT]
-  --proxy, -x		   proxy settings for Malice webhook endpoint [$MALICE_PROXY]
-  --table, -t		   output as Markdown table
-  --all, -a		     output ascii/utf-16 strings
-  --help, -h		    show help
-  --version, -v		 print the version
+  --proxy, -x		    proxy settings for Malice webhook endpoint [$MALICE_PROXY]
+  --table, -t		    output as Markdown table
+  --all, -a		        output ascii/utf-16 strings
+  --help, -h		   show help
+  --version, -v		  print the version
 
 Commands:
   help	Shows a list of commands or help for one command
