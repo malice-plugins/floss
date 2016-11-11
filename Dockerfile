@@ -37,6 +37,7 @@ RUN apk-install -t .build-deps \
   && echo "Building scan Go binary..." \
   && cd /go/src/github.com/maliceio/malice-floss \
   && export GOPATH=/go \
+  && export PATH=$GOPATH/bin:/usr/local/go/bin:$PATH \
   && go version \
   && go get -v \
   && go build -ldflags "-X main.Version=$(cat VERSION) -X main.BuildTime=$(date -u +%Y%m%d)" -o /bin/scan \
