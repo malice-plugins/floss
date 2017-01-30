@@ -13,7 +13,9 @@ dependencies:
 
 test:
   override:
-    - docker run malice_floss -t /bin/cat
+    - docker images malice_floss
+    - docker run malice_floss -V /bin/cat | jq .
+    - docker run malice_floss -V /bin/cat | jq -r .floss.markdown
 
 deployment:
   # master:

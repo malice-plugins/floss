@@ -3,7 +3,7 @@
 malice-floss
 ============
 
-[![Circle CI](https://circleci.com/gh/maliceio/malice-floss.png?style=shield)](https://circleci.com/gh/maliceio/malice-floss) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Image](https://img.shields.io/badge/docker image-106 MB-blue.svg)](https://hub.docker.com/r/malice/floss/)
+[![Circle CI](https://circleci.com/gh/maliceio/malice-floss.png?style=shield)](https://circleci.com/gh/maliceio/malice-floss) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Image](https://img.shields.io/badge/docker image-114 MB-blue.svg)](https://hub.docker.com/r/malice/floss/)
 
 Malice FLOSS Plugin
 
@@ -29,7 +29,7 @@ Usage: floss [OPTIONS] COMMAND [arg...]
 
 Malice FLOSS Plugin
 
-Version: v0.1.0, BuildTime: 20160627
+Version: v0.1.0, BuildTime: 20170130
 
 Author:
   blacktop - <https://github.com/blacktop>
@@ -38,7 +38,7 @@ Options:
   --verbose, -V		    verbose output
   --timeout value       malice plugin timeout (in seconds) (default: 60) [$MALICE_TIMEOUT]
   --elasitcsearch value elasitcsearch address for Malice to store results [$MALICE_ELASTICSEARCH]
-  --post, -p	POST    results to Malice webhook [$MALICE_ENDPOINT]
+  --callback, -c	    POST results to Malice webhook [$MALICE_ENDPOINT]
   --proxy, -x		    proxy settings for Malice webhook endpoint [$MALICE_PROXY]
   --table, -t		    output as Markdown table
   --all, -a		        output ascii/utf-16 strings
@@ -46,6 +46,7 @@ Options:
   --version, -v		    print the version
 
 Commands:
+  web   Create a FLOSS scan web service  
   help	Shows a list of commands or help for one command
 
 Run 'floss COMMAND --help' for more information on a command.
@@ -235,24 +236,9 @@ Location: `0x404DDE`
 Documentation
 -------------
 
-### To write results to [ElasticSearch](https://www.elastic.co/products/elasticsearch)
-
-```bash
-$ docker volume create --name malice
-$ docker run -d --name elastic \
-                -p 9200:9200 \
-                -v malice:/usr/share/elasticsearch/data \
-                 blacktop/elasticsearch
-$ docker run --rm --link elastic malice/floss FILE
-```
-
-### POST results to a webhook
-
-```bash
-$ docker run -v `pwd`:/malware:ro \
-             -e MALICE_ENDPOINT="https://malice.io:31337/scan/file" \
-             malice/floss --post evil.malware
-```
+-	[To write results to ElasticSearch](https://github.com/maliceio/malice-floss/blob/master/docs/elasticsearch.md)
+-	[To create a FLOSS scan micro-service](https://github.com/maliceio/malice-floss/blob/master/docs/web.md)
+-	[To post results to a webhook](https://github.com/maliceio/malice-floss/blob/master/docs/callback.md)
 
 ### Issues
 

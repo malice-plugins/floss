@@ -3,7 +3,10 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -13,6 +16,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/fatih/structs"
+	"github.com/gorilla/mux"
 	"github.com/maliceio/go-plugin-utils/database/elasticsearch"
 	"github.com/maliceio/go-plugin-utils/utils"
 	"github.com/parnurzeal/gorequest"
@@ -24,6 +28,8 @@ var Version string
 
 // BuildTime stores the plugin's build time
 var BuildTime string
+
+var path string
 
 const (
 	name     = "floss"
@@ -51,7 +57,135 @@ type decodedStrings struct {
 	Strings  []string `json:"strings" structs:"strings"`
 }
 
-func printMarkDownTable(f floss) {
+func assert(err error) {
+	if err != nil {
+		log.WithFields(log.Fields{
+			"plugin":   name,
+			"category": category,
+			"path":     path,
+		}).Fatal(err)
+	}
+}
+
+// scanFile scans file with all floss rules in the rules folder
+func scanFile(timeout int, all bool) floss {
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	defer cancel()
+
+	flossResults := floss{}
+	// flossResults.Results = parseFlossOutput(RunCommand("./floss", "-g", path), all)
+	output, err := utils.RunCommand(ctx, "/usr/bin/floss", "-g", path)
+	assert(err)
+	flossResults.Results = parseFlossOutput(output, err, all)
+
+	return flossResults
+}
+
+func parseFlossOutput(flossOutput string, err error, all bool) resultsData {
+
+	if err != nil {
+		return resultsData{ASCIIStrings: []string{err.Error()}}
+	}
+
+	log.WithFields(log.Fields{
+		"plugin":   name,
+		"category": category,
+		"path":     path,
+	}).Debug("FLOSS Output: ", flossOutput)
+
+	keepLines := []string{}
+	results := resultsData{}
+	var decodedStrArray []decodedStrings
+
+	lines := strings.Split(flossOutput, "\n")
+	// remove empty lines
+	for _, line := range lines {
+		if len(strings.TrimSpace(line)) != 0 {
+			keepLines = append(keepLines, strings.TrimSpace(line))
+		}
+	}
+	// build results data
+	for i := 0; i < len(keepLines); i++ {
+		if all {
+			if strings.Contains(keepLines[i], "FLOSS static ASCII strings") {
+				results.ASCIIStrings = utils.RemoveDuplicates(getASCIIStrings(keepLines[i+1 : len(keepLines)]))
+			}
+			if strings.Contains(keepLines[i], "FLOSS static UTF-16 strings") {
+				results.UTF16Strings = utils.RemoveDuplicates(getUTF16Strings(keepLines[i+1 : len(keepLines)]))
+			}
+		}
+		if strings.Contains(keepLines[i], "Decoding function at") {
+			// get function location
+			location, numOfStrings := getLocationAndNumOfDecodedStrs(keepLines[i])
+
+			decodedStr := decodedStrings{
+				Location: location,
+				Strings:  utils.RemoveDuplicates(keepLines[i+1 : i+numOfStrings+1]),
+			}
+			decodedStrArray = append(decodedStrArray, decodedStr)
+			i = i + numOfStrings
+			continue
+		} else if strings.Contains(keepLines[i], "stackstrings") {
+			// get stackstrings
+			line := strings.TrimPrefix(keepLines[i], "FLOSS extracted")
+			numOfStrings, err := strconv.Atoi(strings.TrimSpace(strings.TrimSuffix(line, "stackstrings")))
+			assert(err)
+			// if len(keepLines) < i+numOfStrings+1 {
+			results.StackStrings = keepLines[i+1 : i+numOfStrings+1]
+			// } else {
+			// 	log.Fatal("shiz went sideways.")
+			// }
+			i = i + numOfStrings
+			continue
+		}
+	}
+	results.DecodedStrings = decodedStrArray
+
+	return results
+}
+
+func getLocationAndNumOfDecodedStrs(line string) (string, int) {
+	numMatch := regexp.MustCompile("[0-9]+").FindAllString(line, -1)
+	locMatch := regexp.MustCompile("0x[0-9A-F]+").FindAllString(line, -1)
+
+	if len(locMatch) > 0 && len(numMatch) > 0 {
+		num, err := strconv.Atoi(numMatch[len(numMatch)-1])
+		assert(err)
+
+		return locMatch[0], num
+	}
+	return "", 0
+}
+
+func getASCIIStrings(strArray []string) []string {
+	asciiStrings := []string{}
+	for _, str := range strArray {
+		if strings.Contains(str, "FLOSS static UTF-16 strings") {
+			break
+		}
+		asciiStrings = append(asciiStrings, str)
+	}
+	return asciiStrings
+}
+
+func getUTF16Strings(strArray []string) []string {
+	utf16Strings := []string{}
+	for _, str := range strArray {
+		if strings.Contains(str, "FLOSS decoded") {
+			break
+		}
+		utf16Strings = append(utf16Strings, str)
+	}
+	return utf16Strings
+}
+
+func printMarkDownTable(f floss, toString bool) string {
+
+	if toString {
+		return "STRING VERSION OF MARKDOWN TABLE"
+	}
+
 	fmt.Printf("#### Floss\n\n")
 	if f.Results.ASCIIStrings != nil {
 		fmt.Printf("##### ASCII Strings\n\n")
@@ -87,157 +221,73 @@ func printMarkDownTable(f floss) {
 	} else {
 		fmt.Println(" - No Strings")
 	}
-}
-
-func removeDuplicates(elements []string) []string {
-	// Use map to record duplicates as we find them.
-	encountered := map[string]bool{}
-	result := []string{}
-
-	for v := range elements {
-		if encountered[elements[v]] == true {
-			// Do not add duplicate.
-		} else {
-			// Record this element as an encountered element.
-			encountered[elements[v]] = true
-			// Append to result slice.
-			result = append(result, elements[v])
-		}
-	}
-	// Return the new slice.
-	return result
-}
-
-func getLocationAndNumOfDecodedStrs(line string) (string, int) {
-	numMatch := regexp.MustCompile("[0-9]+").FindAllString(line, -1)
-	locMatch := regexp.MustCompile("0x[0-9A-F]+").FindAllString(line, -1)
-
-	if len(locMatch) > 0 && len(numMatch) > 0 {
-		num, err := strconv.Atoi(numMatch[len(numMatch)-1])
-		utils.Assert(err)
-
-		return locMatch[0], num
-	}
-	return "", 0
-}
-
-func getASCIIStrings(strArray []string) []string {
-	asciiStrings := []string{}
-	for _, str := range strArray {
-		if strings.Contains(str, "FLOSS static UTF-16 strings") {
-			break
-		}
-		asciiStrings = append(asciiStrings, str)
-	}
-	return asciiStrings
-}
-
-func getUTF16Strings(strArray []string) []string {
-	utf16Strings := []string{}
-	for _, str := range strArray {
-		if strings.Contains(str, "FLOSS decoded") {
-			break
-		}
-		utf16Strings = append(utf16Strings, str)
-	}
-	return utf16Strings
-}
-
-func parseFlossOutput(flossOutput string, err error, all bool) resultsData {
-
-	if err != nil {
-		return resultsData{ASCIIStrings: []string{err.Error()}}
-	}
-
-	keepLines := []string{}
-	results := resultsData{}
-	var decodedStrArray []decodedStrings
-
-	lines := strings.Split(flossOutput, "\n")
-	// remove empty lines
-	for _, line := range lines {
-		if len(strings.TrimSpace(line)) != 0 {
-			keepLines = append(keepLines, strings.TrimSpace(line))
-		}
-	}
-	// build results data
-	for i := 0; i < len(keepLines); i++ {
-		if all {
-			if strings.Contains(keepLines[i], "FLOSS static ASCII strings") {
-				results.ASCIIStrings = removeDuplicates(getASCIIStrings(keepLines[i+1 : len(keepLines)]))
-			}
-			if strings.Contains(keepLines[i], "FLOSS static UTF-16 strings") {
-				results.UTF16Strings = removeDuplicates(getUTF16Strings(keepLines[i+1 : len(keepLines)]))
-			}
-		}
-		if strings.Contains(keepLines[i], "Decoding function at") {
-			// get function location
-			location, numOfStrings := getLocationAndNumOfDecodedStrs(keepLines[i])
-
-			decodedStr := decodedStrings{
-				Location: location,
-				Strings:  removeDuplicates(keepLines[i+1 : i+numOfStrings+1]),
-			}
-			decodedStrArray = append(decodedStrArray, decodedStr)
-			i = i + numOfStrings
-			continue
-		} else if strings.Contains(keepLines[i], "stackstrings") {
-			// get stackstrings
-			line := strings.TrimPrefix(keepLines[i], "FLOSS extracted")
-			numOfStrings, err := strconv.Atoi(strings.TrimSpace(strings.TrimSuffix(line, "stackstrings")))
-			utils.Assert(err)
-			// if len(keepLines) < i+numOfStrings+1 {
-			results.StackStrings = keepLines[i+1 : i+numOfStrings+1]
-			// } else {
-			// 	log.Fatal("shiz went sideways.")
-			// }
-			i = i + numOfStrings
-			continue
-		}
-	}
-	results.DecodedStrings = decodedStrArray
-
-	return results
-}
-
-// scanFile scans file with all floss rules in the rules folder
-func scanFile(ctx context.Context, path string, all bool) floss {
-	flossResults := floss{}
-	// flossResults.Results = parseFlossOutput(RunCommand("./floss", "-g", path), all)
-	output, err := utils.RunCommand(ctx, "/usr/bin/floss", "-g", path)
-	flossResults.Results = parseFlossOutput(output, err, all)
-
-	return flossResults
+	return ""
 }
 
 func printStatus(resp gorequest.Response, body string, errs []error) {
 	fmt.Println(body)
 }
 
-var appHelpTemplate = `Usage: {{.Name}} {{if .Flags}}[OPTIONS] {{end}}COMMAND [arg...]
+func webService() {
+	router := mux.NewRouter().StrictSlash(true)
+	router.HandleFunc("/scan", webAvScan).Methods("POST")
+	log.Info("web service listening on port :3993")
+	log.Fatal(http.ListenAndServe(":3993", router))
+}
 
-{{.Usage}}
+func webAvScan(w http.ResponseWriter, r *http.Request) {
 
-Version: {{.Version}}{{if or .Author .Email}}
+	vars := mux.Vars(r)
+	all := vars["all"]
 
-Author:{{if .Author}}
-  {{.Author}}{{if .Email}} - <{{.Email}}>{{end}}{{else}}
-  {{.Email}}{{end}}{{end}}
-{{if .Flags}}
-Options:
-  {{range .Flags}}{{.}}
-  {{end}}{{end}}
-Commands:
-  {{range .Commands}}{{.Name}}{{with .ShortName}}, {{.}}{{end}}{{ "\t" }}{{.Usage}}
-  {{end}}
-Run '{{.Name}} COMMAND --help' for more information on a command.
-`
+	r.ParseMultipartForm(32 << 20)
+	file, header, err := r.FormFile("malware")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintln(w, "Please supply a valid file to scan.")
+		log.Error(err)
+	}
+	defer file.Close()
+
+	log.Debug("Uploaded fileName: ", header.Filename)
+
+	tmpfile, err := ioutil.TempFile("/malware", "web_")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tmpfile.Name()) // clean up
+
+	data, err := ioutil.ReadAll(file)
+
+	if _, err = tmpfile.Write(data); err != nil {
+		log.Fatal(err)
+	}
+	if err = tmpfile.Close(); err != nil {
+		log.Fatal(err)
+	}
+
+	// Do AV scan
+	var fl floss
+	path = tmpfile.Name()
+	if strings.EqualFold(all, "true") || all != "" {
+		fl = scanFile(60, true)
+	} else {
+		fl = scanFile(60, false)
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(fl); err != nil {
+		log.Fatal(err)
+	}
+}
 
 func main() {
 
 	var elastic string
 
-	cli.AppHelpTemplate = appHelpTemplate
+	cli.AppHelpTemplate = utils.AppHelpTemplate
 	app := cli.NewApp()
 
 	app.Name = "floss"
@@ -246,6 +296,7 @@ func main() {
 	app.Version = Version + ", BuildTime: " + BuildTime
 	app.Compiled, _ = time.Parse("20060102", BuildTime)
 	app.Usage = "Malice FLOSS Plugin"
+	app.ArgsUsage = "FILE to scan with FLOSS"
 	app.Flags = []cli.Flag{
 		cli.BoolFlag{
 			Name:  "verbose, V",
@@ -253,7 +304,7 @@ func main() {
 		},
 		cli.IntFlag{
 			Name:   "timeout",
-			Value:  60,
+			Value:  120,
 			Usage:  "malice plugin timeout (in seconds)",
 			EnvVar: "MALICE_TIMEOUT",
 		},
@@ -265,7 +316,7 @@ func main() {
 			Destination: &elastic,
 		},
 		cli.BoolFlag{
-			Name:   "post, p",
+			Name:   "callback, c",
 			Usage:  "POST results to Malice webhook",
 			EnvVar: "MALICE_ENDPOINT",
 		},
@@ -283,24 +334,33 @@ func main() {
 			Usage: "output ascii/utf-16 strings",
 		},
 	}
-	app.ArgsUsage = "FILE to scan with FLOSS"
+	app.Commands = []cli.Command{
+		{
+			Name:  "web",
+			Usage: "Create a FLOSS scan web service",
+			Action: func(c *cli.Context) error {
+				webService()
+				return nil
+			},
+		},
+	}
 	app.Action = func(c *cli.Context) error {
+
+		var err error
+
+		if c.Bool("verbose") {
+			log.SetLevel(log.DebugLevel)
+		}
+
 		if c.Args().Present() {
+			path, err = filepath.Abs(c.Args().First())
+			assert(err)
 
-			ctx, cancel := context.WithTimeout(context.Background(), time.Duration(c.Int("timeout"))*time.Second)
-			defer cancel()
-
-			path := c.Args().First()
-			// Check that file exists
-			if _, err := os.Stat(path); os.IsNotExist(err) {
-				utils.Assert(err)
+			if _, err = os.Stat(path); os.IsNotExist(err) {
+				assert(err)
 			}
 
-			if c.Bool("verbose") {
-				log.SetLevel(log.DebugLevel)
-			}
-
-			floss := scanFile(ctx, path, c.Bool("all"))
+			floss := scanFile(c.Int("timeout"), c.Bool("all"))
 
 			// upsert into Database
 			elasticsearch.InitElasticSearch(elastic)
@@ -312,10 +372,10 @@ func main() {
 			})
 
 			if c.Bool("table") {
-				printMarkDownTable(floss)
+				printMarkDownTable(floss, false)
 			} else {
 				flossJSON, err := json.Marshal(floss)
-				utils.Assert(err)
+				assert(err)
 				if c.Bool("post") {
 					request := gorequest.New()
 					if c.Bool("proxy") {
@@ -337,5 +397,5 @@ func main() {
 	}
 
 	err := app.Run(os.Args)
-	utils.Assert(err)
+	assert(err)
 }

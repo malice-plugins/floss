@@ -11,9 +11,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 
 -	Timeout to protect against bad files
+- web service for file scans
 
 ### Removed
 
 ### Changed
 
--	Upgrade Golang to 1.7.4
+-	Upgrade to new malice/alpine 3.5
