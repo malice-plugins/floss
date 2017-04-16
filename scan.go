@@ -376,7 +376,7 @@ func main() {
 			} else {
 				flossJSON, err := json.Marshal(floss)
 				assert(err)
-				if c.Bool("post") {
+				if c.Bool("callback") {
 					request := gorequest.New()
 					if c.Bool("proxy") {
 						request = gorequest.New().Proxy(os.Getenv("MALICE_PROXY"))

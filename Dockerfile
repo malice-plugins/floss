@@ -1,6 +1,6 @@
 FROM malice/alpine
 
-MAINTAINER blacktop, https://github.com/blacktop
+LABEL maintainer "https://github.com/blacktop"
 
 COPY . /go/src/github.com/maliceio/malice-floss
 RUN apk --update add --no-cache python py-setuptools
@@ -31,5 +31,4 @@ RUN apk --update add --no-cache -t .build-deps \
 WORKDIR /malware
 
 ENTRYPOINT ["su-exec","malice","/sbin/tini","--","scan"]
-
 CMD ["--help"]
