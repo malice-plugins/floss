@@ -59,9 +59,9 @@ jobs:
           name: Run tests
           command: |
             set -x
-            wget https://github.com/maliceio/malice-av/raw/master/samples/befb88b89c2eb401900a68e9f5b78764203f2b48264fcc3f7121bf04a57fd408
-            docker run --rm -v $(PWD):/malware $(ORG)/$(NAME):$(VERSION) -V befb88b89c2eb401900a68e9f5b78764203f2b48264fcc3f7121bf04a57fd408 | jq .
-            docker run --rm -v $(PWD):/malware $(ORG)/$(NAME):$(VERSION) -t befb88b89c2eb401900a68e9f5b78764203f2b48264fcc3f7121bf04a57fd408
+            curl -L -o /tmp/malware https://github.com/maliceio/malice-av/raw/master/samples/befb88b89c2eb401900a68e9f5b78764203f2b48264fcc3f7121bf04a57fd408
+            docker run --rm -v /tmp:/malware $(ORG)/$(NAME):$(VERSION) -V malware | jq .
+            docker run --rm -v /tmp:/malware $(ORG)/$(NAME):$(VERSION) -t malware
       # - run:
       #     name: Review results
       #     command: |

@@ -2,9 +2,25 @@ FROM malice/alpine
 
 LABEL maintainer "https://github.com/blacktop"
 
-COPY . /go/src/github.com/maliceio/malice-floss
 RUN apk --update add --no-cache python py-setuptools
 RUN apk --update add --no-cache -t .build-deps \
+                                    python-dev \
+                                    build-base \
+                                    musl-dev \
+                                    openssl \
+                                    py-pip \
+  && echo "===> Install FLOSS..." \
+  && export PIP_NO_CACHE_DIR=off \
+  && export PIP_DISABLE_PIP_VERSION_CHECK=on \
+  && pip install https://github.com/williballenthin/vivisect/zipball/master \
+  && pip install https://github.com/fireeye/flare-floss/zipball/master \
+  && rm -rf /tmp/* \
+  && apk del --purge .build-deps
+
+COPY . /go/src/github.com/maliceio/malice-floss
+WORKDIR /go/src/github.com/maliceio/malice-floss
+RUN echo "===> Building scan Go binary..." \
+  && apk --update add --no-cache -t .build-deps \
                                     python-dev \
                                     build-base \
                                     mercurial \
@@ -16,13 +32,6 @@ RUN apk --update add --no-cache -t .build-deps \
                                     git \
                                     gcc \
                                     go \
-  && echo "Install FLOSS..." \
-  && export PIP_NO_CACHE_DIR=off \
-  && export PIP_DISABLE_PIP_VERSION_CHECK=on \
-  && pip install https://github.com/williballenthin/vivisect/zipball/master \
-  && pip install https://github.com/fireeye/flare-floss/zipball/master \
-  && echo "Building scan Go binary..." \
-  && cd /go/src/github.com/maliceio/malice-floss \
   && export GOPATH=/go \
   && go version \
   && go get -v \
