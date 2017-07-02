@@ -50,6 +50,7 @@ type resultsData struct {
 	UTF16Strings   []string         `json:"utf-16" structs:"utf-16"`
 	DecodedStrings []decodedStrings `json:"decoded" structs:"decoded"`
 	StackStrings   []string         `json:"stack" structs:"stack"`
+	MarkDown       string           `json:"markdown" structs:"markdown"`
 }
 
 type decodedStrings struct {
@@ -180,12 +181,7 @@ func getUTF16Strings(strArray []string) []string {
 	return utf16Strings
 }
 
-func printMarkDownTable(f floss, toString bool) string {
-
-	if toString {
-		return "STRING VERSION OF MARKDOWN TABLE"
-	}
-
+func generateMarkDownTable(f floss) string {
 	fmt.Printf("#### Floss\n\n")
 	if f.Results.ASCIIStrings != nil {
 		fmt.Printf("##### ASCII Strings\n\n")
@@ -221,7 +217,10 @@ func printMarkDownTable(f floss, toString bool) string {
 	} else {
 		fmt.Println(" - No Strings")
 	}
-	return ""
+}
+
+func printMarkDownTable(f floss) {
+	fmt.Printf(generateMarkDownTable(f))
 }
 
 func printStatus(resp gorequest.Response, body string, errs []error) {
