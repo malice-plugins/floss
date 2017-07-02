@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"text/template"
 	"time"
 
 	"context"
@@ -182,41 +184,52 @@ func getUTF16Strings(strArray []string) []string {
 }
 
 func generateMarkDownTable(f floss) string {
-	fmt.Printf("#### Floss\n\n")
-	if f.Results.ASCIIStrings != nil {
-		fmt.Printf("##### ASCII Strings\n\n")
-		for _, ascStr := range f.Results.ASCIIStrings {
-			fmt.Printf(" - `%s`\n", ascStr)
-		}
-		fmt.Println()
+	var tplOut bytes.Buffer
+
+	t := template.Must(template.New("floss").Parse(tpl))
+
+	err := t.Execute(&tplOut, f)
+	if err != nil {
+		log.Println("executing template:", err)
 	}
-	if f.Results.UTF16Strings != nil {
-		fmt.Printf("##### UTF-16 Strings\n\n")
-		for _, utfStr := range f.Results.UTF16Strings {
-			fmt.Printf(" - `%s`\n", utfStr)
-		}
-		fmt.Println()
-	}
-	fmt.Printf("##### Decoded Strings\n\n")
-	if f.Results.DecodedStrings != nil {
-		for _, decodedStr := range f.Results.DecodedStrings {
-			fmt.Printf("Location: `%s`\n", decodedStr.Location)
-			for _, dStr := range decodedStr.Strings {
-				fmt.Printf(" - `%s`\n", dStr)
-			}
-			fmt.Println()
-		}
-	} else {
-		fmt.Println(" - No Strings")
-	}
-	fmt.Printf("##### Stack Strings\n\n")
-	if f.Results.StackStrings != nil {
-		for _, stkStr := range f.Results.StackStrings {
-			fmt.Printf(" - `%s`\n", stkStr)
-		}
-	} else {
-		fmt.Println(" - No Strings")
-	}
+
+	return tplOut.String()
+
+	// fmt.Printf("#### Floss\n\n")
+	// if f.Results.ASCIIStrings != nil {
+	// 	fmt.Printf("##### ASCII Strings\n\n")
+	// 	for _, ascStr := range f.Results.ASCIIStrings {
+	// 		fmt.Printf(" - `%s`\n", ascStr)
+	// 	}
+	// 	fmt.Println()
+	// }
+	// if f.Results.UTF16Strings != nil {
+	// 	fmt.Printf("##### UTF-16 Strings\n\n")
+	// 	for _, utfStr := range f.Results.UTF16Strings {
+	// 		fmt.Printf(" - `%s`\n", utfStr)
+	// 	}
+	// 	fmt.Println()
+	// }
+	// fmt.Printf("##### Decoded Strings\n\n")
+	// if f.Results.DecodedStrings != nil {
+	// 	for _, decodedStr := range f.Results.DecodedStrings {
+	// 		fmt.Printf("Location: `%s`\n", decodedStr.Location)
+	// 		for _, dStr := range decodedStr.Strings {
+	// 			fmt.Printf(" - `%s`\n", dStr)
+	// 		}
+	// 		fmt.Println()
+	// 	}
+	// } else {
+	// 	fmt.Println(" - No Strings")
+	// }
+	// fmt.Printf("##### Stack Strings\n\n")
+	// if f.Results.StackStrings != nil {
+	// 	for _, stkStr := range f.Results.StackStrings {
+	// 		fmt.Printf(" - `%s`\n", stkStr)
+	// 	}
+	// } else {
+	// 	fmt.Println(" - No Strings")
+	// }
 }
 
 func printMarkDownTable(f floss) {
@@ -371,7 +384,7 @@ func main() {
 			})
 
 			if c.Bool("table") {
-				printMarkDownTable(floss, false)
+				printMarkDownTable(floss)
 			} else {
 				flossJSON, err := json.Marshal(floss)
 				assert(err)

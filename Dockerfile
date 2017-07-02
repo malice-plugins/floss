@@ -17,6 +17,8 @@ RUN apk --update add --no-cache -t .build-deps \
                                     gcc \
                                     go \
   && echo "Install FLOSS..." \
+  && export PIP_NO_CACHE_DIR=off \
+  && export PIP_DISABLE_PIP_VERSION_CHECK=on \
   && pip install https://github.com/williballenthin/vivisect/zipball/master \
   && pip install https://github.com/fireeye/flare-floss/zipball/master \
   && echo "Building scan Go binary..." \
