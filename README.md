@@ -3,7 +3,7 @@
 malice-floss
 ============
 
-[![Circle CI](https://circleci.com/gh/maliceio/malice-floss.png?style=shield)](https://circleci.com/gh/maliceio/malice-floss) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Image](https://img.shields.io/badge/docker%20image-97.9%20MB-blue.svg)](https://hub.docker.com/r/malice/floss/)
+[![Circle CI](https://circleci.com/gh/malice-plugins/malice-floss.png?style=shield)](https://circleci.com/gh/malice-plugins/malice-floss) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Image](https://img.shields.io/badge/docker%20image-97.9%20MB-blue.svg)](https://hub.docker.com/r/malice/floss/)
 
 Malice FLOSS Plugin
 
