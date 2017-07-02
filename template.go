@@ -6,13 +6,13 @@ const tpl = `#### Floss
 ##### ASCII Strings
 {{range .Results.ASCIIStrings}}
   - {{ . -}}
-{{end}}{{end-}}
+{{end}}{{ end -}}
 {{- if .Results.UTF16Strings}}
 
 ##### UTF-16 Strings
 {{range .Results.UTF16Strings}}
   - {{ . -}}
-{{end}}{{end-}}
+{{end}}{{ end -}}
 {{- if .Results.DecodedStrings}}
 
 ##### Decoded Strings
@@ -20,12 +20,13 @@ const tpl = `#### Floss
   Location: {{ .Location -}}
   {{range .Strings}}
     - {{ . -}}
-  {{end}}
-{{end}}{{end-}}
+  {{ end -}}
+{{end}}{{ end -}}
 {{- if .Results.StackStrings}}
 
 ##### Stack Strings
 {{range .Results.StackStrings}}
   - {{ . -}}
-{{end}}{{end}}
+{{end}}
+{{end}}
 `

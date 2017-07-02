@@ -60,8 +60,8 @@ jobs:
           command: |
             set -x
             curl -L -o /tmp/malware https://github.com/maliceio/malice-av/raw/master/samples/befb88b89c2eb401900a68e9f5b78764203f2b48264fcc3f7121bf04a57fd408
-            docker run --rm -v /tmp:/malware $(ORG)/$(NAME):$(VERSION) -V malware | jq .
-            docker run --rm -v /tmp:/malware $(ORG)/$(NAME):$(VERSION) -t malware
+            docker run --rm -v /tmp:/malware app -V malware | jq .
+            docker run --rm -v /tmp:/malware app -t malware
       # - run:
       #     name: Review results
       #     command: |
