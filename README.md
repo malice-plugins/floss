@@ -3,7 +3,7 @@
 malice-floss
 ============
 
-[![Circle CI](https://circleci.com/gh/malice-plugins/floss.png?style=shield)](https://circleci.com/gh/malice-plugins/floss) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Image](https://img.shields.io/badge/docker%20image-93.2MB-blue.svg)](https://hub.docker.com/r/malice/floss/)
+[![Circle CI](https://circleci.com/gh/malice-plugins/floss.png?style=shield)](https://circleci.com/gh/malice-plugins/floss) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Image](https://img.shields.io/badge/docker%20image-92.6MB-blue.svg)](https://hub.docker.com/r/malice/floss/)
 
 Malice FLOSS Plugin
 
@@ -62,18 +62,12 @@ Sample Output
 ```json
 {
   "floss": {
+    "ascii": null,
+    "utf-16": null,
     "decoded": [
       {
-        "Location": "0x401047",
-        "Strings": [
-          "Ie_nkokbpAtep",
-          "+^]g*dpi",
-          "Ie_nkokbpD]ra=_g"
-        ]
-      },
-      {
-        "Location": "0x401059",
-        "Strings": [
+        "location": "0x401059",
+        "strings": [
           "*lecnaC*",
           "Software\\Microsoft\\CurrentNetInf",
           "SYSTEM\\CurrentControlSet\\Control\\Lsa",
@@ -114,20 +108,8 @@ Sample Output
         ]
       },
       {
-        "Location": "0x40511A",
-        "Strings": [
-          "\\A|{@"
-        ]
-      },
-      {
-        "Location": "0x403DDA",
-        "Strings": [
-          ",pVA."
-        ]
-      },
-      {
-        "Location": "0x404DDE",
-        "Strings": [
+        "location": "0x404DDE",
+        "strings": [
           "SMBs",
           "NTLMSSP",
           "Windows 2000 2195",
@@ -140,11 +122,17 @@ Sample Output
           "LANMAN2.1",
           "NT LM 0.12"
         ]
+      },
+      {
+        "location": "0x401047",
+        "strings": [
+          "Ie_nkokbpAtep",
+          "+^]g*dpi",
+          "Ie_nkokbpD]ra=_g"
+        ]
       }
     ],
     "stack": [
-      "\\A|{@",
-      "CAAA\\",
       "cmd.exe"
     ]
   }
@@ -159,77 +147,69 @@ Sample Output
 
 ##### Decoded Strings
 
-Location: `0x401047`
- - `Ie_nkokbpAtep`
- - `+^]g*dpi`
- - `Ie_nkokbpD]ra=_g`
-
-Location: `0x402830`
- - `##########################################################################`
-
 Location: `0x401059`
- - `*lecnaC*`
- - `Software\Microsoft\CurrentNetInf`
- - `SYSTEM\CurrentControlSet\Control\Lsa`
- - `Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run`
- - `MicrosoftZj`
- - `LhbqnrnesDwhs`
- - `MicrosoftHaveExit`
- - `LhbqnrnesG`ud@bj`
- - `IEXPLORE.EXE`
- - `/ver.htm`
- - `/exe.htm`
- - `/app.htm`
- - `/myapp.htm`
- - `/hostlist.htm`
- - `.a`j-gsl`
- - `/SomeUpList.htm`
- - `/SomeUpVer.htm`
- - `www.flyeagles.com`
- - `www.km-nyc.com`
- - `/restore`
- - `/dizhi.gif`
- - `/connect.gif`
- - `\$NtUninstallKB900727$`
- - `\netsvc.exe`
- - `\netscv.exe`
- - `\netsvcs.exe`
- - `System Idle Process`
- - `Program Files`
- - `\Internet Exp1orer`
- - `forceguest`
- - `AudioPort`
- - `AudioPort.sys`
- - `SYSTEM\CurrentControlSet\Services`
- - `SYSTEM\ControlSet001\Services`
- - `SYSTEM\ControlSet002\Services`
- - `\drivers\`
- - `\DriverNum.dat`
 
-Location: `0x40511A`
- - `\A|{@`
-
-Location: `0x403DDA`
- - `,pVA.`
+-	`*lecnaC*`
+-	`Software\Microsoft\CurrentNetInf`
+-	`SYSTEM\CurrentControlSet\Control\Lsa`
+-	`Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run`
+-	`MicrosoftZj`
+-	`LhbqnrnesDwhs`
+-	`MicrosoftHaveExit`
+-	`LhbqnrnesG`ud@bj\`
+-	`IEXPLORE.EXE`
+-	`/ver.htm`
+-	`/exe.htm`
+-	`/app.htm`
+-	`/myapp.htm`
+-	`/hostlist.htm`
+-	`.a`j-gsl\`
+-	`/SomeUpList.htm`
+-	`/SomeUpVer.htm`
+-	`www.flyeagles.com`
+-	`www.km-nyc.com`
+-	`/restore`
+-	`/dizhi.gif`
+-	`/connect.gif`
+-	`\$NtUninstallKB900727$`
+-	`\netsvc.exe`
+-	`\netscv.exe`
+-	`\netsvcs.exe`
+-	`System Idle Process`
+-	`Program Files`
+-	`\Internet Exp1orer`
+-	`forceguest`
+-	`AudioPort`
+-	`AudioPort.sys`
+-	`SYSTEM\CurrentControlSet\Services`
+-	`SYSTEM\ControlSet001\Services`
+-	`SYSTEM\ControlSet002\Services`
+-	`\drivers\`
+-	`\DriverNum.dat`
 
 Location: `0x404DDE`
- - `SMBs`
- - `NTLMSSP`
- - `Windows 2000 2195`
- - `Windows 2000 5.0`
- - `SMBr`
- - `PC NETWORK PROGRAM 1.0`
- - `LANMAN1.0`
- - `Windows for Workgroups 3.1a`
- - `LM1.2X002`
- - `LANMAN2.1`
- - `NT LM 0.12`
+
+-	`SMBs`
+-	`NTLMSSP`
+-	`Windows 2000 2195`
+-	`Windows 2000 5.0`
+-	`SMBr`
+-	`PC NETWORK PROGRAM 1.0`
+-	`LANMAN1.0`
+-	`Windows for Workgroups 3.1a`
+-	`LM1.2X002`
+-	`LANMAN2.1`
+-	`NT LM 0.12`
+
+Location: `0x401047`
+
+-	`Ie_nkokbpAtep`
+-	`+^]g*dpi`
+-	`Ie_nkokbpD]ra=_g`
 
 ##### Stack Strings
 
- - `\A|{@`
- - `CAAA\`
- - `cmd.exe`
+-	`cmd.exe`
 
 ---
 

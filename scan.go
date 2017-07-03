@@ -52,7 +52,7 @@ type resultsData struct {
 	UTF16Strings   []string         `json:"utf-16" structs:"utf-16"`
 	DecodedStrings []decodedStrings `json:"decoded" structs:"decoded"`
 	StackStrings   []string         `json:"stack" structs:"stack"`
-	MarkDown       string           `json:"markdown" structs:"markdown"`
+	MarkDown       string           `json:"markdown,omitempty" structs:"markdown,omitempty"`
 }
 
 type decodedStrings struct {
@@ -194,46 +194,6 @@ func generateMarkDownTable(f floss) string {
 	}
 
 	return tplOut.String()
-
-	// fmt.Printf("#### Floss\n\n")
-	// if f.Results.ASCIIStrings != nil {
-	// 	fmt.Printf("##### ASCII Strings\n\n")
-	// 	for _, ascStr := range f.Results.ASCIIStrings {
-	// 		fmt.Printf(" - `%s`\n", ascStr)
-	// 	}
-	// 	fmt.Println()
-	// }
-	// if f.Results.UTF16Strings != nil {
-	// 	fmt.Printf("##### UTF-16 Strings\n\n")
-	// 	for _, utfStr := range f.Results.UTF16Strings {
-	// 		fmt.Printf(" - `%s`\n", utfStr)
-	// 	}
-	// 	fmt.Println()
-	// }
-	// fmt.Printf("##### Decoded Strings\n\n")
-	// if f.Results.DecodedStrings != nil {
-	// 	for _, decodedStr := range f.Results.DecodedStrings {
-	// 		fmt.Printf("Location: `%s`\n", decodedStr.Location)
-	// 		for _, dStr := range decodedStr.Strings {
-	// 			fmt.Printf(" - `%s`\n", dStr)
-	// 		}
-	// 		fmt.Println()
-	// 	}
-	// } else {
-	// 	fmt.Println(" - No Strings")
-	// }
-	// fmt.Printf("##### Stack Strings\n\n")
-	// if f.Results.StackStrings != nil {
-	// 	for _, stkStr := range f.Results.StackStrings {
-	// 		fmt.Printf(" - `%s`\n", stkStr)
-	// 	}
-	// } else {
-	// 	fmt.Println(" - No Strings")
-	// }
-}
-
-func printMarkDownTable(f floss) {
-	fmt.Printf(generateMarkDownTable(f))
 }
 
 func printStatus(resp gorequest.Response, body string, errs []error) {
@@ -373,6 +333,7 @@ func main() {
 			}
 
 			floss := scanFile(c.Int("timeout"), c.Bool("all"))
+			floss.Results.MarkDown = generateMarkDownTable(floss)
 
 			// upsert into Database
 			elasticsearch.InitElasticSearch(elastic)
@@ -384,8 +345,9 @@ func main() {
 			})
 
 			if c.Bool("table") {
-				printMarkDownTable(floss)
+				fmt.Printf(floss.Results.MarkDown)
 			} else {
+				floss.Results.MarkDown = ""
 				flossJSON, err := json.Marshal(floss)
 				assert(err)
 				if c.Bool("callback") {
