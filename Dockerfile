@@ -2,6 +2,11 @@ FROM malice/alpine
 
 LABEL maintainer "https://github.com/blacktop"
 
+LABEL malice.plugin.repository = "https://github.com/malice-plugins/floss.git"
+LABEL malice.plugin.category="pe"
+LABEL malice.plugin.mime="application/x-dosexec"
+LABEL malice.plugin.docker.engine="*"
+
 RUN apk --update add --no-cache python py-setuptools
 RUN apk --update add --no-cache -t .build-deps \
                                     python-dev \
