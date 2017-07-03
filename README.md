@@ -139,7 +139,7 @@ Sample Output
 }
 ```
 
-### STDOUT (Markdown Table):
+### Markdown:
 
 ---
 
