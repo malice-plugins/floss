@@ -3,11 +3,13 @@
 malice-floss
 ============
 
-[![Circle CI](https://circleci.com/gh/malice-plugins/floss.png?style=shield)](https://circleci.com/gh/malice-plugins/floss) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Image](https://img.shields.io/badge/docker%20image-92.6MB-blue.svg)](https://hub.docker.com/r/malice/floss/)
+[![Circle CI](https://circleci.com/gh/malice-plugins/floss.png?style=shield)](https://circleci.com/gh/malice-plugins/floss) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Image](https://img.shields.io/badge/docker%20image-93.5MB-blue.svg)](https://hub.docker.com/r/malice/floss/)
 
 Malice FLOSS Plugin
 
-This repository contains a **Dockerfile** of the [FLOSS](https://github.com/fireeye/flare-floss) malice plugin **malice/floss**.
+> This repository contains a **Dockerfile** of the [FLOSS](https://github.com/fireeye/flare-floss) malice plugin **malice/floss**.
+
+__
 
 ### Dependencies
 
@@ -237,6 +239,7 @@ Please update the [CHANGELOG.md](https://github.com/maliceio/malice-floss/blob/m
 ### TODO
 
 - https://bitbucket.org/cse-assemblyline/alsvc_frankenstrings/src
+- prevent URLs from being rendered as links in MarkDown :warning:
 
 ### License
 

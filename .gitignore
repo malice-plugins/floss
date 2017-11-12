@@ -30,3 +30,4 @@ release
 build
 .vscode
 *.bu
+.circleci/build_num

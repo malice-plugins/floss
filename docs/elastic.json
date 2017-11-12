@@ -1,0 +1,104 @@
+{
+  "took": 81,
+  "timed_out": false,
+  "_shards": {
+    "total": 1,
+    "successful": 1,
+    "failed": 0
+  },
+  "hits": {
+    "total": 1,
+    "max_score": 1,
+    "hits": [
+      {
+        "_index": "malice",
+        "_type": "samples",
+        "_id": "AV-xavF86trGM2K8fzX-",
+        "_score": 1,
+        "_source": {
+          "plugins": {
+            "pe": {
+              "floss": {
+                "ascii": null,
+                "decoded": [
+                  {
+                    "location": "0x401059",
+                    "strings": [
+                      "*lecnaC*",
+                      "Software\\Microsoft\\CurrentNetInf",
+                      "SYSTEM\\CurrentControlSet\\Control\\Lsa",
+                      "Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run",
+                      "MicrosoftZj",
+                      "LhbqnrnesDwhs",
+                      "MicrosoftHaveExit",
+                      "LhbqnrnesG`ud@bj",
+                      "IEXPLORE.EXE",
+                      "/ver.htm",
+                      "/exe.htm",
+                      "/app.htm",
+                      "/myapp.htm",
+                      "/hostlist.htm",
+                      ".a`j-gsl",
+                      "/SomeUpList.htm",
+                      "/SomeUpVer.htm",
+                      "www.flyeagles.com",
+                      "www.km-nyc.com",
+                      "/restore",
+                      "/dizhi.gif",
+                      "/connect.gif",
+                      "\\$NtUninstallKB900727$",
+                      "\\netsvc.exe",
+                      "\\netscv.exe",
+                      "\\netsvcs.exe",
+                      "System Idle Process",
+                      "Program Files",
+                      "\\Internet Exp1orer",
+                      "forceguest",
+                      "AudioPort",
+                      "AudioPort.sys",
+                      "SYSTEM\\CurrentControlSet\\Services",
+                      "SYSTEM\\ControlSet001\\Services",
+                      "SYSTEM\\ControlSet002\\Services",
+                      "\\drivers\\",
+                      "\\DriverNum.dat"
+                    ]
+                  },
+                  {
+                    "location": "0x404DDE",
+                    "strings": [
+                      "SMBs",
+                      "NTLMSSP",
+                      "Windows 2000 2195",
+                      "Windows 2000 5.0",
+                      "SMBr",
+                      "PC NETWORK PROGRAM 1.0",
+                      "LANMAN1.0",
+                      "Windows for Workgroups 3.1a",
+                      "LM1.2X002",
+                      "LANMAN2.1",
+                      "NT LM 0.12"
+                    ]
+                  },
+                  {
+                    "location": "0x401047",
+                    "strings": [
+                      "Ie_nkokbpAtep",
+                      "+^]g*dpi",
+                      "Ie_nkokbpD]ra=_g"
+                    ]
+                  }
+                ],
+                "markdown": "#### Floss\n\n##### Decoded Strings\n\nLocation: `0x401059`\n\n  - `*lecnaC*`\n  - `Software\\Microsoft\\CurrentNetInf`\n  - `SYSTEM\\CurrentControlSet\\Control\\Lsa`\n  - `Software\\Microsoft\\Windows\\CurrentVersion\\Policies\\Explorer\\Run`\n  - `MicrosoftZj`\n  - `LhbqnrnesDwhs`\n  - `MicrosoftHaveExit`\n  - `LhbqnrnesG`ud@bj`\n  - `IEXPLORE.EXE`\n  - `/ver.htm`\n  - `/exe.htm`\n  - `/app.htm`\n  - `/myapp.htm`\n  - `/hostlist.htm`\n  - `.a`j-gsl`\n  - `/SomeUpList.htm`\n  - `/SomeUpVer.htm`\n  - `www.flyeagles.com`\n  - `www.km-nyc.com`\n  - `/restore`\n  - `/dizhi.gif`\n  - `/connect.gif`\n  - `\\$NtUninstallKB900727$`\n  - `\\netsvc.exe`\n  - `\\netscv.exe`\n  - `\\netsvcs.exe`\n  - `System Idle Process`\n  - `Program Files`\n  - `\\Internet Exp1orer`\n  - `forceguest`\n  - `AudioPort`\n  - `AudioPort.sys`\n  - `SYSTEM\\CurrentControlSet\\Services`\n  - `SYSTEM\\ControlSet001\\Services`\n  - `SYSTEM\\ControlSet002\\Services`\n  - `\\drivers\\`\n  - `\\DriverNum.dat`\n\nLocation: `0x404DDE`\n\n  - `SMBs`\n  - `NTLMSSP`\n  - `Windows 2000 2195`\n  - `Windows 2000 5.0`\n  - `SMBr`\n  - `PC NETWORK PROGRAM 1.0`\n  - `LANMAN1.0`\n  - `Windows for Workgroups 3.1a`\n  - `LM1.2X002`\n  - `LANMAN2.1`\n  - `NT LM 0.12`\n\nLocation: `0x401047`\n\n  - `Ie_nkokbpAtep`\n  - `+^]g*dpi`\n  - `Ie_nkokbpD]ra=_g`\n\n\n##### Stack Strings\n\n  - `cmd.exe`\n\n",
+                "stack": [
+                  "cmd.exe"
+                ],
+                "utf-16": null
+              }
+            }
+          },
+          "scan_date": "2017-11-12T18:08:16.7444756Z"
+        }
+      }
+    ]
+  }
+}
