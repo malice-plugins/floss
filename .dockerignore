@@ -1,20 +1,18 @@
-
 # Ignore .git folder
 .git*
 .gitignore
 
-docs*
 .circleci*
-.vscode*
+docs*
+vendor*
+test*
 
-README.md
-README.md.bu
+*.md
+*.md.bu
 LICENSE
 Makefile
-
-befb88b89c2eb401900a68e9f5b78764203f2b48264fcc3f7121bf04a57fd408
 
 debug
 floss
 logo.png
-CHANGELOG.md
+

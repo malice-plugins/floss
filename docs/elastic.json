@@ -1,9 +1,10 @@
 {
-  "took": 81,
+  "took": 46,
   "timed_out": false,
   "_shards": {
     "total": 1,
     "successful": 1,
+    "skipped": 0,
     "failed": 0
   },
   "hits": {
@@ -13,7 +14,7 @@
       {
         "_index": "malice",
         "_type": "samples",
-        "_id": "AV-xavF86trGM2K8fzX-",
+        "_id": "emyL42QBPF5G-mjeSaDP",
         "_score": 1,
         "_source": {
           "plugins": {
@@ -96,7 +97,7 @@
               }
             }
           },
-          "scan_date": "2017-11-12T18:08:16.7444756Z"
+          "scan_date": "2018-07-29T00:58:33.800133245Z"
         }
       }
     ]

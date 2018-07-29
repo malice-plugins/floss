@@ -31,3 +31,5 @@ build
 .vscode
 *.bu
 .circleci/build_num
+test/malware
+test/not.malware
