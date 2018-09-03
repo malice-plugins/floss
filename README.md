@@ -2,7 +2,7 @@
 
 # malice-floss
 
-[![Circle CI](https://circleci.com/gh/malice-plugins/floss.png?style=shield)](https://circleci.com/gh/malice-plugins/floss) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Image](https://img.shields.io/badge/docker%20image-109MB-blue.svg)](https://hub.docker.com/r/malice/floss/)
+[![Circle CI](https://circleci.com/gh/malice-plugins/floss.png?style=shield)](https://circleci.com/gh/malice-plugins/floss) [![License](http://img.shields.io/:license-mit-blue.svg)](http://doge.mit-license.org) [![Docker Stars](https://img.shields.io/docker/stars/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Pulls](https://img.shields.io/docker/pulls/malice/floss.svg)](https://hub.docker.com/r/malice/floss/) [![Docker Image](https://img.shields.io/badge/docker%20image-108MB-blue.svg)](https://hub.docker.com/r/malice/floss/)
 
 Malice FLOSS Plugin
 
@@ -14,12 +14,12 @@ Malice FLOSS Plugin
 
 - [malice/alpine](https://hub.docker.com/r/malice/alpine/)
 
-### Installation
+## Installation
 
-1.  Install [Docker](https://www.docker.io/).
-2.  Download [trusted build](https://hub.docker.com/r/malice/floss/) from public [DockerHub](https://hub.docker.com): `docker pull malice/floss`
+1. Install [Docker](https://www.docker.io/).
+2. Download [trusted build](https://hub.docker.com/r/malice/floss/) from public [DockerHub](https://hub.docker.com): `docker pull malice/floss`
 
-### Usage
+## Usage
 
 ```bash
 docker run --rm -v /path/to/file:/malware:ro malice/floss FILE
@@ -28,25 +28,25 @@ Usage: floss [OPTIONS] COMMAND [arg...]
 
 Malice FLOSS Plugin
 
-Version: v0.1.0, BuildTime: 20170130
+Version: v0.1.0, BuildTime: 20180903
 
 Author:
   blacktop - <https://github.com/blacktop>
 
 Options:
-  --verbose, -V		    verbose output
-  --timeout value       malice plugin timeout (in seconds) (default: 60) [$MALICE_TIMEOUT]
-  --elasitcsearch value elasitcsearch address for Malice to store results [$MALICE_ELASTICSEARCH]
-  --callback, -c	    POST results to Malice webhook [$MALICE_ENDPOINT]
-  --proxy, -x		    proxy settings for Malice webhook endpoint [$MALICE_PROXY]
-  --table, -t		    output as Markdown table
-  --all, -a		        output ascii/utf-16 strings
-  --help, -h		    show help
-  --version, -v		    print the version
+  --verbose, -V          verbose output
+  --timeout value        malice plugin timeout (in seconds) (default: 120) [$MALICE_TIMEOUT]
+  --elasticsearch value  elasticsearch url for Malice to store results [$MALICE_ELASTICSEARCH_URL]
+  --callback, -c         POST results to Malice webhook [$MALICE_ENDPOINT]
+  --proxy, -x            proxy settings for Malice webhook endpoint [$MALICE_PROXY]
+  --table, -t            output as Markdown table
+  --all, -a              output ascii/utf-16 strings
+  --help, -h             show help
+  --version, -v          print the version
 
 Commands:
   web   Create a FLOSS scan web service
-  help	Shows a list of commands or help for one command
+  help  Shows a list of commands or help for one command
 
 Run 'floss COMMAND --help' for more information on a command.
 ```
@@ -211,25 +211,25 @@ Location: `0x401047`
 - [To create a FLOSS scan micro-service](https://github.com/malice-plugins/floss/blob/master/docs/web.md)
 - [To post results to a webhook](https://github.com/malice-plugins/floss/blob/master/docs/callback.md)
 
-### Issues
+## Issues
 
 Find a bug? Want more features? Find something missing in the documentation? Let me know! Please don't hesitate to [file an issue](https://github.com/malice-plugins/floss/issues/new)
 
-### CHANGELOG
+## CHANGELOG
 
 See [`CHANGELOG.md`](https://github.com/malice-plugins/floss/blob/master/CHANGELOG.md)
 
-### Contributing
+## Contributing
 
 [See all contributors on GitHub](https://github.com/malice-plugins/floss/graphs/contributors).
 
 Please update the [CHANGELOG.md](https://github.com/malice-plugins/floss/blob/master/CHANGELOG.md) and submit a [Pull Request on GitHub](https://help.github.com/articles/using-pull-requests/).
 
-### TODO
+## TODO
 
 - [ ] https://bitbucket.org/cse-assemblyline/alsvc_frankenstrings
 - [ ] prevent URLs from being rendered as links in MarkDown :warning:
 
-### License
+## License
 
 MIT Copyright (c) 2016 **blacktop**

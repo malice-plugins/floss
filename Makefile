@@ -1,7 +1,7 @@
 REPO=malice-plugins/floss
 ORG=malice
 NAME=floss
-CATEGORY=pe
+CATEGORY=exe
 VERSION=$(shell cat VERSION)
 
 MALWARE=tests/malware
@@ -12,7 +12,7 @@ all: build size tag test_all
 
 .PHONY: build
 build:
-	cd $(VERSION); docker build -t $(ORG)/$(NAME):$(VERSION) .
+	docker build -t $(ORG)/$(NAME):$(VERSION) .
 
 .PHONY: size
 size:
@@ -41,7 +41,7 @@ ifeq ("$(shell docker inspect -f {{.State.Running}} elasticsearch)", "true")
 	@docker rm -f elasticsearch || true
 endif
 	@echo "===> Starting elasticsearch"
-	@docker run --init -d --name elasticsearch -p 9200:9200 malice/elasticsearch:6.3; sleep 15
+	@docker run --init -d --name elasticsearch -p 9200:9200 malice/elasticsearch:6.4; sleep 15
 
 .PHONY: malware
 malware:
@@ -63,31 +63,29 @@ test: malware
 .PHONY: test_elastic
 test_elastic: start_elasticsearch malware
 	@echo "===> ${NAME} test_elastic found"
-	docker run --rm --link elasticsearch -e MALICE_ELASTICSEARCH=elasticsearch -v $(PWD):/malware $(ORG)/$(NAME):$(VERSION) -V $(MALWARE)
+	docker run --rm --link elasticsearch -e MALICE_ELASTICSEARCH_URL=http://elasticsearch:9200 -v $(PWD):/malware $(ORG)/$(NAME):$(VERSION) -V $(MALWARE)
 	# @echo "===> ${NAME} test_elastic NOT found"
-	# docker run --rm --link elasticsearch -e MALICE_ELASTICSEARCH=elasticsearch $(ORG)/$(NAME):$(VERSION) -V --api ${MALICE_VT_API} lookup $(MISSING_HASH)
+	# docker run --rm --link elasticsearch -e MALICE_ELASTICSEARCH_URL=http://elasticsearch:9200 -v $(PWD):/malware $(ORG)/$(NAME):$(VERSION) -V $(NOT_MALWARE)
 	http localhost:9200/malice/_search | jq . > docs/elastic.json
 
 .PHONY: test_markdown
-test_markdown:
+test_markdown: test_elastic
 	@echo "===> ${NAME} test_markdown"
 	# http localhost:9200/malice/_search query:=@docs/query.json | jq . > docs/elastic.json
 	cat docs/elastic.json | jq -r '.hits.hits[] ._source.plugins.${CATEGORY}.${NAME}.markdown' > docs/SAMPLE.md
-	docker container rm -f elasticsearch
 
 .PHONY: test_web
 test_web: malware stop
-	@echo "===> ${NAME} web service"
-	@docker run --init -d --name $(NAME) -p 3993:3993 -v `pwd`/rules:/rules $(ORG)/$(NAME):$(VERSION) -V web
+	@echo "===> Starting web service"
+	@docker run -d --name $(NAME) -p 3993:3993 $(ORG)/$(NAME):$(VERSION) web
 	http -f localhost:3993/scan malware@$(MALWARE)
-	http -f localhost:3993/scan malware@$(NOT_MALWARE)
+	@echo "===> Stopping web service"
 	@docker logs $(NAME)
-	@docker container rm -f $(NAME)
+	@docker rm -f $(NAME)
 
 .PHONY: stop
-stop:
-	@echo "===> Stopping container ${NAME}"
-	@docker container rm -f $(NAME) || true
+stop: ## Kill running docker containers
+	@docker rm -f $(NAME) || true
 
 .PHONY: circle
 circle: ci-size
