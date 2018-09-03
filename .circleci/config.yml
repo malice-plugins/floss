@@ -69,8 +69,3 @@ jobs:
       #       do
       #         docker run --rm --volumes-from malvol2 app $file | jq .
       #       done
-      - run:
-          name: Run update test
-          command: |
-            set -x
-            docker run --rm app -V update
