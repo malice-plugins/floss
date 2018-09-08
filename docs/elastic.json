@@ -1,5 +1,5 @@
 {
-  "took": 44,
+  "took": 48,
   "timed_out": false,
   "_shards": {
     "total": 1,
@@ -14,7 +14,7 @@
       {
         "_index": "malice",
         "_type": "samples",
-        "_id": "KtRSnWUBxyiQabzgBEBE",
+        "_id": "40x9rGUBTKlWlfYu6SdU",
         "_score": 1,
         "_source": {
           "plugins": {
@@ -97,7 +97,7 @@
               }
             }
           },
-          "scan_date": "2018-09-03T02:45:22.617800717Z"
+          "scan_date": "2018-09-06T01:27:37.54728987Z"
         }
       }
     ]
