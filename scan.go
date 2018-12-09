@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -38,8 +39,8 @@ var (
 	// BuildTime stores the plugin's build time
 	BuildTime string
 
-	path string
-
+	path    string
+	timeout int
 	// es is the elasticsearch database object
 	es elasticsearch.Database
 )
@@ -49,15 +50,21 @@ type pluginResults struct {
 	Data resultsData `json:"floss" structs:"floss"`
 }
 
+type pluginError struct {
+	Message string `json:"message"`
+	Type    string `json:"type"`
+}
+
 type floss struct {
-	Results resultsData `json:"floss"`
+	Results resultsData `json:"floss,omitempty"`
+	Error   pluginError `json:"error,omitempty"`
 }
 
 type resultsData struct {
-	ASCIIStrings   []string         `json:"ascii" structs:"ascii"`
-	UTF16Strings   []string         `json:"utf-16" structs:"utf-16"`
-	DecodedStrings []decodedStrings `json:"decoded" structs:"decoded"`
-	StackStrings   []string         `json:"stack" structs:"stack"`
+	ASCIIStrings   []string         `json:"ascii,omitempty" structs:"ascii"`
+	UTF16Strings   []string         `json:"utf-16,omitempty" structs:"utf-16"`
+	DecodedStrings []decodedStrings `json:"decoded,omitempty" structs:"decoded"`
+	StackStrings   []string         `json:"stack,omitempty" structs:"stack"`
 	MarkDown       string           `json:"markdown,omitempty" structs:"markdown,omitempty"`
 }
 
@@ -77,25 +84,30 @@ func assert(err error) {
 }
 
 // scanFile scans file with all floss rules in the rules folder
-func scanFile(timeout int, all bool) floss {
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
-	defer cancel()
+func scanFile(ctx context.Context, all bool) floss {
 
 	flossResults := floss{}
-	// flossResults.Results = parseFlossOutput(RunCommand("./floss", "-g", path), all)
-	output, err := utils.RunCommand(ctx, "/usr/bin/floss", "-g", path)
-	assert(err)
-	flossResults.Results = parseFlossOutput(output, err, all)
+
+	output, err := exec.CommandContext(ctx, "/usr/bin/floss", "-g", path).Output()
+	if ctx.Err() == context.DeadlineExceeded {
+		return floss{Error: pluginError{
+			Message: errors.Wrap(ctx.Err(), "plugin deadline exceeded (increase timeout with --timeout flag)").Error(),
+			Type:    "timeout",
+		}}
+	}
+	if err != nil {
+		return floss{Error: pluginError{
+			Message: errors.Wrapf(err, "cmd failed: /usr/bin/floss -g %s", path).Error(),
+			Type:    "exec",
+		}}
+	}
+
+	flossResults.Results = parseFlossOutput(string(output), all)
 
 	return flossResults
 }
 
-func parseFlossOutput(flossOutput string, err error, all bool) resultsData {
-
-	if err != nil {
-		return resultsData{ASCIIStrings: []string{err.Error()}}
-	}
+func parseFlossOutput(flossOutput string, all bool) resultsData {
 
 	log.WithFields(log.Fields{
 		"plugin":   name,
@@ -215,6 +227,9 @@ func webService() {
 
 func webAvScan(w http.ResponseWriter, r *http.Request) {
 
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+	defer cancel()
+
 	vars := mux.Vars(r)
 	all := vars["all"]
 
@@ -248,13 +263,18 @@ func webAvScan(w http.ResponseWriter, r *http.Request) {
 	var fl floss
 	path = tmpfile.Name()
 	if strings.EqualFold(all, "true") || all != "" {
-		fl = scanFile(120, true)
+		fl = scanFile(ctx, true)
 	} else {
-		fl = scanFile(120, false)
+		fl = scanFile(ctx, false)
 	}
 
 	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
+
+	if fl.Error != (pluginError{}) {
+		w.WriteHeader(http.StatusInternalServerError)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
 
 	if err := json.NewEncoder(w).Encode(fl); err != nil {
 		log.Fatal(err)
@@ -279,10 +299,11 @@ func main() {
 			Usage: "verbose output",
 		},
 		cli.IntFlag{
-			Name:   "timeout",
-			Value:  120,
-			Usage:  "malice plugin timeout (in seconds)",
-			EnvVar: "MALICE_TIMEOUT",
+			Name:        "timeout",
+			Value:       240,
+			Usage:       "malice plugin timeout (in seconds)",
+			EnvVar:      "MALICE_TIMEOUT",
+			Destination: &timeout,
 		},
 		cli.StringFlag{
 			Name:        "elasticsearch",
@@ -324,6 +345,23 @@ func main() {
 
 		var err error
 
+		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+		defer cancel()
+
+		// csig := make(chan os.Signal, 1)
+		// signal.Notify(csig, os.Interrupt)
+		// defer func() {
+		// 	signal.Stop(csig)
+		// 	cancel()
+		// }()
+		// go func() {
+		// 	select {
+		// 	case <-csig:
+		// 		cancel()
+		// 	case <-ctx.Done():
+		// 	}
+		// }()
+
 		if c.Bool("verbose") {
 			log.SetLevel(log.DebugLevel)
 		}
@@ -336,7 +374,11 @@ func main() {
 				assert(err)
 			}
 
-			floss := scanFile(c.Int("timeout"), c.Bool("all"))
+			floss := scanFile(ctx, c.Bool("all"))
+			// log.Debug(floss)
+			// if floss.Error != (pluginError{}){
+			// 	return errors.Wrapf(floss.Error.Error, "failed to scan %s", path)
+			// }
 			floss.Results.MarkDown = generateMarkDownTable(floss)
 
 			// upsert into Database
