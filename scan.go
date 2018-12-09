@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -348,19 +349,19 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
 		defer cancel()
 
-		// csig := make(chan os.Signal, 1)
-		// signal.Notify(csig, os.Interrupt)
-		// defer func() {
-		// 	signal.Stop(csig)
-		// 	cancel()
-		// }()
-		// go func() {
-		// 	select {
-		// 	case <-csig:
-		// 		cancel()
-		// 	case <-ctx.Done():
-		// 	}
-		// }()
+		csig := make(chan os.Signal, 1)
+		signal.Notify(csig, os.Interrupt)
+		defer func() {
+			signal.Stop(csig)
+			cancel()
+		}()
+		go func() {
+			select {
+			case <-csig:
+				cancel()
+			case <-ctx.Done():
+			}
+		}()
 
 		if c.Bool("verbose") {
 			log.SetLevel(log.DebugLevel)
